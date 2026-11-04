@@ -1231,19 +1231,19 @@
 
     .lesson-screen {
       min-height: 100vh;
-      background: #080808;
+      background: #060606;
       color: var(--white);
     }
     .lesson-nav {
       position: sticky;
       top: 0;
       z-index: 40;
-      background: rgba(8,8,8,.92);
-      backdrop-filter: blur(16px);
+      background: rgba(6,6,6,.9);
+      backdrop-filter: blur(18px);
       border-bottom: 1px solid var(--line);
     }
     .lesson-nav__inner {
-      width: min(calc(100% - var(--gutter) * 2), var(--container));
+      width: min(calc(100% - var(--gutter) * 2), 1380px);
       margin: 0 auto;
       min-height: 64px;
       display: flex;
@@ -1261,52 +1261,85 @@
     .lesson-back:hover { color: var(--yellow); }
     .lesson-brand { font-family: var(--font-display); font-size: .8rem; letter-spacing: .14em; color: var(--grey-2); }
     .lesson-wrap {
-      width: min(calc(100% - var(--gutter) * 2), 1180px);
+      width: min(calc(100% - var(--gutter) * 2), 1380px);
       margin: 0 auto;
-      padding: clamp(36px, 6vw, 76px) 0 100px;
+      padding: 34px 0 100px;
     }
-    .lesson-meta { display:flex; justify-content:space-between; gap:20px; color:var(--grey-2); font-size:.8rem; }
-    .lesson-progress-track { height: 3px; margin-top: 14px; background:#242424; overflow:hidden; }
+    .lesson-topbar {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:24px;
+      align-items:end;
+      padding-bottom:24px;
+      border-bottom:1px solid var(--line);
+    }
+    .lesson-meta { display:grid; gap:5px; color:var(--grey-2); font-size:.8rem; }
+    .lesson-meta #lesson-trail-name { color:var(--white); font-family:var(--font-display); font-size:1rem; font-weight:600; }
+    .lesson-progress-box { min-width:min(320px,32vw); }
+    .lesson-progress-label-row { display:flex; justify-content:space-between; gap:12px; color:var(--grey-2); font-size:.78rem; }
+    .lesson-progress-percent { color:var(--yellow); font-weight:600; }
+    .lesson-progress-track { height: 4px; margin-top: 10px; background:#242424; overflow:hidden; border-radius:999px; }
     .lesson-progress-fill { height:100%; width:0; background:var(--yellow); transition:width .35s var(--ease); }
-    .lesson-intro { max-width: 900px; margin: 52px 0 30px; }
+    .lesson-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(310px,360px); gap:clamp(28px,4vw,56px); align-items:start; margin-top:36px; }
+    .lesson-main { min-width:0; }
+    .lesson-intro { max-width: 940px; margin: 0 0 24px; }
     .lesson-kicker { color:var(--yellow); font-size:.72rem; font-weight:600; letter-spacing:.18em; text-transform:uppercase; }
-    .lesson-title { margin-top:14px; font-family:var(--font-display); font-size:clamp(2rem,4.4vw,4rem); line-height:1.02; letter-spacing:-.04em; }
-    .lesson-summary { margin-top:18px; max-width:760px; color:var(--grey-1); font-size:1rem; }
-    .lesson-player { position:relative; aspect-ratio:16/9; overflow:hidden; background:#111; border:1px solid #292929; }
+    .lesson-title { margin-top:10px; font-family:var(--font-display); font-size:clamp(1.9rem,3.6vw,3.35rem); line-height:1.04; letter-spacing:-.04em; }
+    .lesson-summary { margin-top:14px; max-width:820px; color:var(--grey-1); font-size:.96rem; line-height:1.65; }
+    .lesson-player { position:relative; aspect-ratio:16/9; overflow:hidden; background:#111; border:1px solid #292929; box-shadow:0 26px 80px rgba(0,0,0,.3); }
     .lesson-player iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
     .lesson-placeholder { position:absolute; inset:0; display:grid; place-items:center; text-align:center; color:var(--grey-2); padding:30px; }
     .lesson-placeholder__icon { width:64px; height:64px; display:grid; place-items:center; margin:0 auto 16px; border:1px solid var(--yellow); border-radius:50%; color:var(--yellow); }
-    .lesson-actions { display:flex; justify-content:space-between; gap:12px; padding:24px 0; border-bottom:1px solid var(--line); }
-    .lesson-btn { min-height:46px; padding:11px 18px; border:1px solid var(--line-strong); background:transparent; color:var(--white); }
+    .lesson-actions { display:grid; grid-template-columns:auto 1fr auto; gap:10px; padding:18px 0 0; }
+    .lesson-btn { min-height:48px; padding:11px 18px; border:1px solid var(--line-strong); background:transparent; color:var(--white); }
     .lesson-btn:hover { border-color:var(--yellow); color:var(--yellow); }
     .lesson-btn--primary { background:var(--yellow); color:var(--black); border-color:var(--yellow); font-weight:600; }
     .lesson-btn--primary:hover { background:#ffc85f; color:var(--black); }
-    .lesson-btn:disabled { opacity:.55; cursor:default; }
-    .lesson-list-head { display:flex; justify-content:space-between; align-items:end; gap:20px; margin:64px 0 20px; }
+    .lesson-btn:disabled { opacity:.42; cursor:default; }
+    .lesson-sidebar { position:sticky; top:88px; max-height:calc(100vh - 112px); display:flex; flex-direction:column; min-height:0; border:1px solid #252525; background:#0b0b0b; }
+    .lesson-sidebar__head { padding:20px 20px 16px; border-bottom:1px solid #252525; }
+    .lesson-sidebar__head h2 { font-family:var(--font-display); font-size:1.1rem; letter-spacing:-.02em; }
+    .lesson-sidebar__head p { margin-top:5px; color:var(--grey-2); font-size:.76rem; }
+    .lesson-list { display:grid; gap:0; overflow:auto; overscroll-behavior:contain; }
+    .lesson-item { width:100%; display:grid; grid-template-columns:34px minmax(0,1fr) auto; align-items:center; gap:10px; padding:15px 16px; text-align:left; background:transparent; border:0; border-bottom:1px solid #222; color:var(--white); }
+    .lesson-item:last-child { border-bottom:0; }
+    .lesson-item:hover { background:#111; }
+    .lesson-item.active { background:rgba(254,183,55,.07); box-shadow:inset 3px 0 0 var(--yellow); }
+    .lesson-item .number { color:var(--grey-2); font-size:.72rem; min-width:28px; }
+    .lesson-item__copy { min-width:0; display:grid; gap:4px; }
+    .lesson-item strong { font-size:.84rem; line-height:1.35; font-weight:500; }
+    .lesson-item__duration { color:var(--grey-2); font-size:.7rem; }
+    .lesson-item .done { color:var(--yellow); font-size:.7rem; white-space:nowrap; }
+    .lesson-finish { margin-top:56px; padding:34px; border:1px solid rgba(254,183,55,.35); background:linear-gradient(135deg,rgba(254,183,55,.08),rgba(254,183,55,.015)); }
+    .lesson-finish .lesson-list-head { margin:0 0 26px; }
+    .lesson-list-head { display:flex; justify-content:space-between; align-items:end; gap:20px; margin:0 0 20px; }
     .lesson-list-head h2 { font-family:var(--font-display); font-size:1.6rem; letter-spacing:-.03em; }
-    .lesson-list-head span { color:var(--grey-2); font-size:.75rem; }
-    .lesson-list { display:grid; gap:8px; }
-    .lesson-item { width:100%; display:flex; align-items:center; gap:14px; padding:17px 18px; text-align:left; background:#0d0d0d; border:1px solid #252525; color:var(--white); }
-    .lesson-item:hover { border-color:#454545; }
-    .lesson-item.active { border-color:var(--yellow); background:rgba(254,183,55,.055); }
-    .lesson-item .number { color:var(--grey-2); font-size:.75rem; min-width:28px; }
-    .lesson-item strong { font-size:.9rem; font-weight:500; }
-    .lesson-item .done { margin-left:auto; color:var(--yellow); font-size:.75rem; }
-    .lesson-finish { margin-top:64px; padding-top:48px; border-top:1px solid var(--line); }
+    .lesson-list-head span { color:var(--yellow); font-size:.75rem; }
     .lesson-finish__copy { color:var(--grey-1); margin-bottom:18px; }
     .nps-scale { display:grid; grid-template-columns:repeat(11,minmax(0,1fr)); gap:7px; margin-bottom:20px; }
     .nps-score { min-height:42px; border:1px solid #303030; background:#0d0d0d; color:var(--white); }
     .nps-score[aria-checked="true"] { border-color:var(--yellow); color:var(--yellow); background:rgba(254,183,55,.07); }
     .finish-status { min-height:1.5em; margin-top:14px; color:var(--yellow); font-size:.84rem; }
 
+    @media (max-width: 980px) {
+      .lesson-layout { grid-template-columns:1fr; }
+      .lesson-sidebar { position:static; max-height:none; }
+      .lesson-list { max-height:420px; }
+    }
     @media (max-width: 720px) {
       .nav__welcome { display:none !important; }
       .field-row { grid-template-columns:1fr; }
       .choice-group--inline { grid-template-columns:1fr 1fr; }
-      .lesson-meta { flex-direction:column; gap:5px; }
-      .lesson-actions { flex-direction:column; }
+      .lesson-wrap { padding-top:22px; }
+      .lesson-topbar { grid-template-columns:1fr; gap:16px; }
+      .lesson-progress-box { min-width:0; }
+      .lesson-layout { margin-top:24px; }
+      .lesson-title { font-size:clamp(1.65rem,8vw,2.35rem); }
+      .lesson-actions { grid-template-columns:1fr 1fr; }
+      .lesson-actions #mark-done { grid-column:1 / -1; grid-row:1; }
       .lesson-actions .lesson-btn { width:100%; }
       .lesson-list-head { align-items:flex-start; flex-direction:column; gap:6px; }
+      .lesson-finish { padding:24px 18px; }
       .nps-scale { grid-template-columns:repeat(6,minmax(0,1fr)); }
     }
 
@@ -1629,32 +1662,53 @@
       </div>
     </nav>
     <main class="lesson-wrap">
-      <div class="lesson-meta"><span id="lesson-trail-name"></span><span id="lesson-progress-label"></span></div>
-      <div class="lesson-progress-track"><div class="lesson-progress-fill" id="lesson-progress"></div></div>
-      <div class="lesson-intro">
-        <div class="lesson-kicker" id="lesson-index"></div>
-        <h1 class="lesson-title" id="lesson-title">Carregando trilha…</h1>
-        <p class="lesson-summary" id="lesson-summary"></p>
-      </div>
-      <div class="lesson-player" id="lesson-player" aria-label="Vídeo da aula">
-        <div class="lesson-placeholder"><div><div class="lesson-placeholder__icon">▶</div><strong id="video-label">Vídeo da aula</strong><p>Carregando conteúdo…</p></div></div>
-      </div>
-      <div class="lesson-actions">
-        <button class="lesson-btn" id="mark-done" type="button">✓ Marcar como concluída</button>
-        <button class="lesson-btn lesson-btn--primary" id="next-lesson" type="button">Próxima aula →</button>
-      </div>
-      <div class="lesson-list-head"><h2>Conteúdo das aulas</h2><span>Selecione para assistir</span></div>
-      <div class="lesson-list" id="lesson-list"></div>
-      <section class="lesson-finish" id="lesson-finish" hidden aria-labelledby="finish-title">
-        <div class="lesson-list-head"><h2 id="finish-title">Feedback e certificado</h2><span>Trilha concluída</span></div>
-        <div id="finish-feedback">
-          <p class="lesson-finish__copy">De 0 a 10, quanto você recomendaria esta trilha a um amigo ou colega?</p>
-          <div class="nps-scale" id="nps-scale" role="radiogroup" aria-label="Nota de 0 a 10"></div>
-          <div class="field"><label for="nps-comment">Comentário (opcional)</label><textarea id="nps-comment" maxlength="1000" placeholder="Conte como foi sua experiência"></textarea></div>
+      <div class="lesson-topbar">
+        <div class="lesson-meta">
+          <span>SUA TRILHA</span>
+          <span id="lesson-trail-name"></span>
         </div>
-        <button class="lesson-btn lesson-btn--primary" id="certificate-btn" type="button">Enviar feedback e resgatar certificado</button>
-        <p class="finish-status" id="finish-status" role="status"></p>
-      </section>
+        <div class="lesson-progress-box" aria-label="Progresso da trilha">
+          <div class="lesson-progress-label-row"><span id="lesson-progress-label"></span><span class="lesson-progress-percent" id="lesson-progress-percent">0%</span></div>
+          <div class="lesson-progress-track"><div class="lesson-progress-fill" id="lesson-progress"></div></div>
+        </div>
+      </div>
+
+      <div class="lesson-layout">
+        <div class="lesson-main">
+          <div class="lesson-intro">
+            <div class="lesson-kicker" id="lesson-index"></div>
+            <h1 class="lesson-title" id="lesson-title">Carregando trilha…</h1>
+            <p class="lesson-summary" id="lesson-summary"></p>
+          </div>
+          <div class="lesson-player" id="lesson-player" aria-label="Vídeo da aula">
+            <div class="lesson-placeholder"><div><div class="lesson-placeholder__icon">▶</div><strong id="video-label">Vídeo da aula</strong><p>Carregando conteúdo…</p></div></div>
+          </div>
+          <div class="lesson-actions">
+            <button class="lesson-btn" id="previous-lesson" type="button">← Aula anterior</button>
+            <button class="lesson-btn" id="mark-done" type="button">✓ Marcar como concluída</button>
+            <button class="lesson-btn lesson-btn--primary" id="next-lesson" type="button">Próxima aula →</button>
+          </div>
+
+          <section class="lesson-finish" id="lesson-finish" hidden aria-labelledby="finish-title">
+            <div class="lesson-list-head"><h2 id="finish-title">Trilha concluída</h2><span>Feedback e certificado</span></div>
+            <div id="finish-feedback">
+              <p class="lesson-finish__copy">De 0 a 10, quanto você recomendaria esta trilha a um amigo ou colega?</p>
+              <div class="nps-scale" id="nps-scale" role="radiogroup" aria-label="Nota de 0 a 10"></div>
+              <div class="field"><label for="nps-comment">Comentário (opcional)</label><textarea id="nps-comment" maxlength="1000" placeholder="Conte como foi sua experiência"></textarea></div>
+            </div>
+            <button class="lesson-btn lesson-btn--primary" id="certificate-btn" type="button">Enviar feedback e resgatar certificado</button>
+            <p class="finish-status" id="finish-status" role="status"></p>
+          </section>
+        </div>
+
+        <aside class="lesson-sidebar" aria-label="Conteúdo da trilha">
+          <div class="lesson-sidebar__head">
+            <h2>Conteúdo da trilha</h2>
+            <p>Selecione uma aula para assistir</p>
+          </div>
+          <div class="lesson-list" id="lesson-list"></div>
+        </aside>
+      </div>
     </main>
   </section>
 
@@ -2770,7 +2824,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
       return {
         slug: estatica.id, title: estatica.title,
         lessons: estatica.lessons.map(lesson => ({
-          id: lesson.id, title: lesson.title, summary: (lesson.highlights || [])[0] || estatica.description, videoUrl: lesson.videoUrl || ''
+          id: lesson.id, title: lesson.title, summary: (lesson.highlights || [])[0] || estatica.description, duration: lesson.duration || '', videoUrl: lesson.videoUrl || ''
         }))
       };
     }
@@ -2789,6 +2843,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
       lessons: aulas.map((aula,index) => ({
         id: aula.id, title: aula.titulo || 'Aula ' + (index+1),
         summary: aula.descricao || 'Assista ao conteúdo e marque a aula como concluída para avançar na trilha.',
+        duration: aula.duracao || '',
         videoUrl: aula.vimeo_id ? (aula.video_provider === 'youtube' ? 'https://youtu.be/' + aula.vimeo_id : 'https://vimeo.com/' + aula.vimeo_id) : ''
       }))
     };
@@ -2882,24 +2937,63 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     const lessons = current.lessons;
     const data = lessons[currentLesson];
     const done = current.completed;
-    byId('lesson-trail-name').textContent = trailName(current.cardSlug);
+    const percent = lessons.length ? Math.round(done.size / lessons.length * 100) : 0;
+    byId('lesson-trail-name').textContent = current.title || trailName(current.cardSlug);
     byId('lesson-index').textContent = `AULA ${currentLesson+1} DE ${lessons.length}`;
     byId('lesson-title').textContent = data.title;
     byId('lesson-summary').textContent = data.summary;
     renderVideo(data,currentLesson);
     byId('lesson-progress-label').textContent = `${done.size} de ${lessons.length} aulas concluídas`;
-    byId('lesson-progress').style.width = `${done.size / lessons.length * 100}%`;
+    byId('lesson-progress').style.width = `${percent}%`;
+    byId('lesson-progress-percent').textContent = `${percent}%`;
+
+    const previous = byId('previous-lesson');
+    previous.disabled = currentLesson === 0;
+
     const mark = byId('mark-done');
     mark.textContent = done.has(data.id) ? '✓ Aula concluída' : '✓ Marcar como concluída';
     mark.disabled = done.has(data.id);
-    byId('next-lesson').textContent = currentLesson === lessons.length-1 ? 'Voltar à primeira aula ↻' : 'Próxima aula →';
+
+    const next = byId('next-lesson');
+    next.textContent = currentLesson === lessons.length-1 ? 'Voltar à primeira aula ↻' : 'Próxima aula →';
+
     const list = byId('lesson-list'); list.replaceChildren();
     lessons.forEach((item,i) => {
-      const b = document.createElement('button'); b.type='button'; b.className='lesson-item' + (i===currentLesson?' active':'');
-      const num=document.createElement('span'); num.className='number'; num.textContent=String(i+1).padStart(2,'0');
-      const name=document.createElement('strong'); name.textContent=item.title; b.append(num,name);
-      if (done.has(item.id)) { const d=document.createElement('span'); d.className='done'; d.textContent='✓ Concluída'; b.append(d); }
-      b.addEventListener('click',()=>{ currentLesson=i; renderLesson(); trackView(); window.scrollTo({top:0,behavior:reducedMotion.matches?'instant':'smooth'}); });
+      const b = document.createElement('button');
+      b.type='button';
+      b.className='lesson-item' + (i===currentLesson?' active':'');
+      b.setAttribute('aria-current', i===currentLesson ? 'true' : 'false');
+
+      const num=document.createElement('span');
+      num.className='number';
+      num.textContent=String(i+1).padStart(2,'0');
+
+      const copy=document.createElement('span');
+      copy.className='lesson-item__copy';
+      const name=document.createElement('strong');
+      name.textContent=item.title;
+      copy.append(name);
+      if (item.duration) {
+        const duration=document.createElement('span');
+        duration.className='lesson-item__duration';
+        duration.textContent=item.duration;
+        copy.append(duration);
+      }
+
+      b.append(num,copy);
+      if (done.has(item.id)) {
+        const d=document.createElement('span');
+        d.className='done';
+        d.textContent='✓';
+        d.setAttribute('aria-label','Aula concluída');
+        b.append(d);
+      }
+      b.addEventListener('click',()=>{
+        currentLesson=i;
+        renderLesson();
+        trackView();
+        document.querySelector('.lesson-main')?.scrollIntoView({behavior:reducedMotion.matches?'instant':'smooth',block:'start'});
+      });
       list.append(b);
     });
     renderFinish();
@@ -3051,7 +3145,8 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     if(error) alert('Não foi possível salvar seu progresso agora.'); else current.completed.add(lesson.id);
     renderLesson();
   });
-  byId('next-lesson').addEventListener('click',()=>{ if(!current)return; currentLesson=(currentLesson+1)%current.lessons.length; renderLesson(); trackView(); window.scrollTo({top:0,behavior:reducedMotion.matches?'instant':'smooth'}); });
+  byId('previous-lesson').addEventListener('click',()=>{ if(!current||currentLesson===0)return; currentLesson-=1; renderLesson(); trackView(); document.querySelector('.lesson-main')?.scrollIntoView({behavior:reducedMotion.matches?'instant':'smooth',block:'start'}); });
+  byId('next-lesson').addEventListener('click',()=>{ if(!current)return; currentLesson=(currentLesson+1)%current.lessons.length; renderLesson(); trackView(); document.querySelector('.lesson-main')?.scrollIntoView({behavior:reducedMotion.matches?'instant':'smooth',block:'start'}); });
   byId('certificate-btn').addEventListener('click',claimCertificate);
 
   // Tela intermediária real dentro do próprio HTML.
@@ -3164,12 +3259,20 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
       button.disabled = false;
     }
   });
-  document.addEventListener('click', event => {
+  document.addEventListener('click', async event => {
     const card = event.target.closest('.trail-card[data-trilha]');
     if (!card || card.closest('[data-clone]')) return;
     event.preventDefault();
     const slug = canonicalTrailSlug(card.dataset.trilha);
     if (!slug) return;
+
+    const previewLessons = new URLSearchParams(window.location.search).get('preview_aulas') === '1';
+    if (previewLessons) {
+      pendingTrail = slug;
+      await openTrailStartModal(slug);
+      return;
+    }
+
     window.location.assign('/trilha/' + encodeURIComponent(slug));
   });
 
