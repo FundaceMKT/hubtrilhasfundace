@@ -1745,7 +1745,7 @@
             <div id="finish-feedback">
               <p class="lesson-finish__copy">De 0 a 10, quanto você recomendaria esta trilha a um amigo ou colega?</p>
               <div class="nps-scale" id="nps-scale" role="radiogroup" aria-label="Nota de 0 a 10"></div>
-              <div class="field"><label for="nps-comment">Comentário (opcional)</label><textarea id="nps-comment" maxlength="1000" placeholder="Conte como foi sua experiência"></textarea></div>
+              <div class="field"><label for="nps-comment">Comentário sobre sua experiência</label><textarea id="nps-comment" maxlength="1000" required placeholder="Conte como foi sua experiência"></textarea></div>
             </div>
             <button class="lesson-btn lesson-btn--primary" id="certificate-btn" type="button">Enviar feedback e resgatar certificado</button>
             <p class="certificate-watch-note" id="certificate-watch-note">O certificado é liberado quando o progresso de visualização da trilha atinge o mínimo necessário.</p>
@@ -2921,6 +2921,24 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     return videoUrl;
   }
 
+  async function loadWatchProgressOverride(trailSlug) {
+    if (!session?.user?.id || !trailSlug) return null;
+    const { data, error } = await db
+      .from('user_trilha_starts')
+      .select('watch_progress_override_percent')
+      .eq('user_id', session.user.id)
+      .eq('trilha_slug', trailSlug)
+      .order('started_at', { ascending:false })
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      console.warn('Não foi possível consultar o override de progresso:', error);
+      return null;
+    }
+    const value=Number(data?.watch_progress_override_percent);
+    return Number.isFinite(value) ? value : null;
+  }
+
   async function loadProgress(trail) {
     const ids = trail.lessons.map(lesson => lesson.id);
     const { data, error } = await db.from('user_lesson_progress').select('lesson_id').eq('user_id', session.user.id);
@@ -2952,10 +2970,13 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
       const trail = await resolveTrail(cardSlug);
       if (!trail.lessons.length) throw new Error('Esta trilha ainda não tem aulas publicadas.');
       await ensureEnrollment(cardSlug, trail);
-      const completed = await loadProgress(trail);
+      const watchProgressOverride = await loadWatchProgressOverride(trail.slug);
+      const completed = watchProgressOverride !== null && watchProgressOverride >= 100
+        ? new Set(trail.lessons.map(lesson => lesson.id))
+        : await loadProgress(trail);
       feedbackDone = await checkFeedback(trail);
       npsScore = null;
-      current = { cardSlug, ...trail, completed };
+      current = { cardSlug, ...trail, completed, watchProgressOverride };
       const firstPending = trail.lessons.findIndex(lesson => !completed.has(lesson.id));
       currentLesson = firstPending === -1 ? 0 : firstPending;
       renderLesson();
@@ -3079,6 +3100,10 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
 
   async function calculateWatchProgress() {
     if (!current) return {percent:0,watched:0,total:0};
+    if (current.watchProgressOverride !== null && Number.isFinite(Number(current.watchProgressOverride))) {
+      const percent=Math.max(0,Math.min(100,Math.round(Number(current.watchProgressOverride))));
+      return {percent,watched:percent,total:100,override:true};
+    }
     const durations=new Map();
     current.lessons.forEach(l=>{ if(Number(l.videoDurationSeconds)>0) durations.set(String(l.id),Number(l.videoDurationSeconds)); });
     const total=current.lessons.reduce((sum,l)=>sum+(durations.get(String(l.id))||0),0);
@@ -3290,11 +3315,17 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
   async function claimCertificate() {
     const button=byId('certificate-btn');
     if (!feedbackDone && npsScore===null) { setStatus('finish-status','Escolha uma nota de 0 a 10.'); return; }
+    const feedbackComment=byId('nps-comment').value.trim();
+    if (!feedbackDone && !feedbackComment) {
+      setStatus('finish-status','Escreva um comentário sobre sua experiência para continuar.');
+      byId('nps-comment').focus();
+      return;
+    }
     button.disabled=true;
     try {
       if (!feedbackDone) {
         setStatus('finish-status','Enviando feedback...');
-        const { error } = await db.rpc('record_trilha_nps_resposta', { p_email:session.user.email, p_trail_slug:current.slug, p_score:npsScore, p_nome:userName()||null, p_comentario:byId('nps-comment').value.trim()||null });
+        const { error } = await db.rpc('record_trilha_nps_resposta', { p_email:session.user.email, p_trail_slug:current.slug, p_score:npsScore, p_nome:userName()||null, p_comentario:feedbackComment });
         if (error) throw new Error('Não foi possível enviar seu feedback agora.');
         feedbackDone=true; await renderFinish();
       }
