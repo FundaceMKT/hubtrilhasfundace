@@ -1535,77 +1535,13 @@
         <div class="carousel" role="region" aria-label="Trilhas disponíveis">
           <div class="carousel__viewport">
             <ul class="carousel__track" id="trails-track" role="list">
-              <li class="carousel__item">
-                <button class="trail-card" type="button" data-trilha="ifrs" style="--img:url('https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=60')">
-                  <span class="trail-card__top"><svg class="trail-card__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
+              <li class="carousel__item" id="trails-loading">
+                <div class="trail-card" aria-hidden="true">
                   <span>
-                    <span class="trail-card__title">Contabilidade IFRS</span>
-                    <span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">Domine as normas internacionais e leia demonstrações com o olhar do mercado global.</span></span></span>
+                    <span class="trail-card__title">Carregando trilhas...</span>
+                    <span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">Buscando as trilhas publicadas na Hub.</span></span></span>
                   </span>
-                </button>
-              </li>
-              <li class="carousel__item">
-                <button class="trail-card" type="button" data-trilha="gestao-projetos" style="--img:url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=60')">
-                  <span class="trail-card__top"><svg class="trail-card__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
-                  <span>
-                    <span class="trail-card__title">Gestão de Projetos</span>
-                    <span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">Planeje, execute e entregue projetos com método, clareza e controle de riscos.</span></span></span>
-                  </span>
-                </button>
-              </li>
-              <li class="carousel__item">
-                <button class="trail-card" type="button" data-trilha="financas" style="--img:url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=900&q=60')">
-                  <span class="trail-card__top"><svg class="trail-card__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
-                  <span>
-                    <span class="trail-card__title">Finanças</span>
-                    <span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">Fundamentos de análise financeira para decisões mais seguras na empresa e na vida.</span></span></span>
-                  </span>
-                </button>
-              </li>
-              <li class="carousel__item">
-                <button class="trail-card" type="button" data-trilha="trilha-de-marketing-estrategico" style="--img:url('https://images.unsplash.com/photo-1557838923-2985c318be48?auto=format&fit=crop&w=900&q=60')">
-                  <span class="trail-card__top"><svg class="trail-card__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
-                  <span>
-                    <span class="trail-card__title">Marketing Estratégico</span>
-                    <span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">Posicionamento, público e proposta de valor para construir marcas relevantes.</span></span></span>
-                  </span>
-                </button>
-              </li>
-              <li class="carousel__item">
-                <button class="trail-card" type="button" data-trilha="gedat" style="--img:url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=60')">
-                  <span class="trail-card__top"><svg class="trail-card__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
-                  <span>
-                    <span class="trail-card__title">Gestão Estratégica Baseada em Dados</span>
-                    <span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">Transforme dados em indicadores e indicadores em decisões estratégicas.</span></span></span>
-                  </span>
-                </button>
-              </li>
-              <li class="carousel__item">
-                <button class="trail-card" type="button" data-trilha="gestao" style="--img:url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=900&q=60')">
-                  <span class="trail-card__top"><svg class="trail-card__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
-                  <span>
-                    <span class="trail-card__title">Gestão de Produção com IA</span>
-                    <span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">Aplique inteligência artificial para otimizar processos, qualidade e produtividade.</span></span></span>
-                  </span>
-                </button>
-              </li>
-              <li class="carousel__item">
-                <button class="trail-card" type="button" data-trilha="gestao-estrategica-ti" style="--img:url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=60')">
-                  <span class="trail-card__top"><svg class="trail-card__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
-                  <span>
-                    <span class="trail-card__title">Gestão Estratégica de TI</span>
-                    <span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">Alinhe tecnologia aos objetivos do negócio e lidere a transformação digital.</span></span></span>
-                  </span>
-                </button>
-              </li>
-              <li class="carousel__item">
-                <button class="trail-card" type="button" data-trilha="semana-ia-no-direito" style="--img:url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=900&q=60')">
-                  <span class="trail-card__top"><svg class="trail-card__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
-                  <span>
-                    <span class="trail-card__title">Semana IA no Direito</span>
-                    <span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">Os impactos da inteligência artificial na prática jurídica, na ética e na regulação.</span></span></span>
-                  </span>
-                </button>
+                </div>
               </li>
             </ul>
           </div>
@@ -2520,7 +2456,6 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
   };
   const PRETENDE_POS = { 'Sim, imediatamente': 'sim_agora', 'Sim, mas não agora': 'sim_depois', 'Não': 'nao' };
 
-  const cards = [...document.querySelectorAll('.trail-card[data-trilha]')].filter(card => !card.closest('[data-clone]'));
   const loginModal = byId('login-modal');
   const registerModal = byId('register-modal');
   const recoverModal = byId('recover-modal');
@@ -2773,50 +2708,64 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     }
   }
 
-  async function loadDynamicTrails() {
-    if (dynamicTrails) return dynamicTrails;
-    const { data, error } = await db.from('trilhas').select('id, nome, descricao, slug, status, lp_url, lp_ativa, aulas(id, titulo, vimeo_id, video_provider, duracao, ordem)');
+  const TRAIL_CARD_IMAGES = {
+    'contifrs': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=60',
+    'gestao-projetos': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=60',
+    'financas': 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=900&q=60',
+    'trilha-de-marketing-estrategico': 'https://images.unsplash.com/photo-1557838923-2985c318be48?auto=format&fit=crop&w=900&q=60',
+    'gedat': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=60',
+    'gestao-producao-ia': 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=900&q=60',
+    'gestao-estrategica-ti': 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=60',
+    'semana-ia-no-direito': 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=900&q=60',
+    'trilha-nova-de-marketing': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=60'
+  };
+  const DEFAULT_TRAIL_CARD_IMAGE = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=60';
+
+  async function loadDynamicTrails(force=false) {
+    if (dynamicTrails && !force) return dynamicTrails;
+    const { data, error } = await db
+      .from('trilhas')
+      .select('id, nome, descricao, slug, status, lp_url, lp_ativa, criada_em')
+      .eq('status','publicada')
+      .order('criada_em',{ascending:true});
     if (error) throw error;
-    dynamicTrails = data || [];
+    dynamicTrails = (data || []).filter(trail => slugify(trail.slug));
+    trailMetaBySlug.clear();
     dynamicTrails.forEach(t=>trailMetaBySlug.set(slugify(t.slug||t.nome),t));
     return dynamicTrails;
   }
 
-
-  function dynamicTrailCardMarkup(trail,index){
-    const slug=slugify(trail.slug||trail.nome);
-    const desc=String(trail.descricao||'Explore esta trilha gratuita da Fundace.').trim();
-    return `<li class="carousel__item" data-dynamic-trail="${slug}"><button class="trail-card" type="button" data-trilha="${slug}" style="--img:url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=60')"><span class="trail-card__top"><svg class="trail-card__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></span><span><span class="trail-card__title">${escapeHtml(trail.nome||'Trilha Fundace')}</span><span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">${escapeHtml(desc)}</span></span></span></span></button></li>`;
+  function escapeHtml(value){
+    return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   }
 
-  function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function dynamicTrailCardMarkup(trail){
+    const slug=slugify(trail.slug);
+    const desc=String(trail.descricao||'Explore esta trilha gratuita da Fundace.').trim();
+    const image=TRAIL_CARD_IMAGES[slug]||DEFAULT_TRAIL_CARD_IMAGE;
+    return `<li class="carousel__item" data-dynamic-trail="${escapeHtml(slug)}"><button class="trail-card" type="button" data-trilha="${escapeHtml(slug)}" style="--img:url('${escapeHtml(image)}')"><span class="trail-card__top"><svg class="trail-card__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></span><span><span class="trail-card__title">${escapeHtml(trail.nome||'Trilha Fundace')}</span><span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">${escapeHtml(desc)}</span></span></span></span></button></li>`;
+  }
 
   async function syncHubTrailCards(){
-    const trails=await loadDynamicTrails();
-    const bySlug=new Map(trails.map(t=>[slugify(t.slug||t.nome),t]));
-    document.querySelectorAll('.trail-card[data-trilha]').forEach(card=>{
-      if(card.closest('[data-clone]')) return;
-      const slug=slugify(card.dataset.trilha);
-      const dbTrail=bySlug.get(slug);
-      if(!dbTrail) return;
-      const item=card.closest('.carousel__item');
-      if(item) item.hidden=dbTrail.status!=='publicada';
-    });
     const track=byId('trails-track');
     if(!track) return;
-    track.querySelectorAll('[data-dynamic-trail]').forEach(el=>el.remove());
-    const existing=new Set([...track.querySelectorAll('.trail-card[data-trilha]')].map(c=>slugify(c.dataset.trilha)));
-    const published=trails.filter(t=>t.status==='publicada');
-    published.forEach((trail,i)=>{
-      const slug=slugify(trail.slug||trail.nome);
-      if(!slug||existing.has(slug)) return;
-      track.insertAdjacentHTML('beforeend',dynamicTrailCardMarkup(trail,track.querySelectorAll('.carousel__item:not([hidden])').length+i));
-      existing.add(slug);
-    });
+    try{
+      const trails=await loadDynamicTrails(true);
+      if(!trails.length){
+        track.innerHTML='<li class="carousel__item"><div class="trail-card"><span><span class="trail-card__title">Nenhuma trilha publicada</span><span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">Novas trilhas aparecerão aqui assim que forem publicadas.</span></span></span></span></div></li>';
+        return;
+      }
+      track.innerHTML=trails.map(dynamicTrailCardMarkup).join('');
+    }catch(error){
+      console.error('Não foi possível carregar as trilhas publicadas:',error);
+      track.innerHTML='<li class="carousel__item"><div class="trail-card"><span><span class="trail-card__title">Não foi possível carregar as trilhas</span><span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">Atualize a página em alguns instantes.</span></span></span></span></div></li>';
+      throw error;
+    }
   }
 
   async function resolveTrail(cardSlug) {
-    const estatica = (window.FUNDACE_TRILHAS_ESTATICAS || {})[cardSlug];
+    const staticKey = ({ contifrs:'ifrs', 'gestao-producao-ia':'gestao' }[cardSlug] || cardSlug);
+    const estatica = (window.FUNDACE_TRILHAS_ESTATICAS || {})[staticKey];
     if (estatica) {
       return {
         slug: estatica.id, title: estatica.title,
@@ -2825,15 +2774,21 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
         }))
       };
     }
-    const trilhas = (await loadDynamicTrails()).filter(t => t.status === 'publicada');
+    const trilhas = await loadDynamicTrails();
     const alvo = trilhas.find(t => slugify(t.slug) === slugify(cardSlug));
     if (!alvo) throw new Error('Esta trilha não está disponível no momento.');
-    const aulas = [...(alvo.aulas || [])].sort((a,b) => Number(a.ordem || 0) - Number(b.ordem || 0));
+    const { data: aulasData, error: aulasError } = await db
+      .from('aulas')
+      .select('id,titulo,vimeo_id,video_provider,duracao,ordem,descricao')
+      .eq('trilha_id',alvo.id)
+      .order('ordem',{ascending:true});
+    if (aulasError) throw aulasError;
+    const aulas = aulasData || [];
     return {
       slug: slugify(alvo.slug), title: alvo.nome,
       lessons: aulas.map((aula,index) => ({
         id: aula.id, title: aula.titulo || 'Aula ' + (index+1),
-        summary: 'Assista ao conteúdo e marque a aula como concluída para avançar na trilha.',
+        summary: aula.descricao || 'Assista ao conteúdo e marque a aula como concluída para avançar na trilha.',
         videoUrl: aula.vimeo_id ? (aula.video_provider === 'youtube' ? 'https://youtu.be/' + aula.vimeo_id : 'https://vimeo.com/' + aula.vimeo_id) : ''
       }))
     };
@@ -3218,7 +3173,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     window.location.assign('/trilha/' + encodeURIComponent(slug));
   });
 
-  /* Grade estática de trilhas: todos os cards ficam visíveis simultaneamente. */
+  /* A grade de trilhas é carregada dinamicamente do Supabase. */
   const revealTargets=document.querySelectorAll('[data-reveal],[data-draw]');
   const reveal=el=>el.classList.add(el.hasAttribute('data-draw')?'is-drawn':'is-visible');
   if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(!entry.isIntersecting)return;reveal(entry.target);observer.unobserve(entry.target);});},{threshold:.25});revealTargets.forEach(el=>observer.observe(el));}else revealTargets.forEach(reveal);
