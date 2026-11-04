@@ -1320,6 +1320,7 @@
     .nps-score { min-height:42px; border:1px solid #303030; background:#0d0d0d; color:var(--white); }
     .nps-score[aria-checked="true"] { border-color:var(--yellow); color:var(--yellow); background:rgba(254,183,55,.07); }
     .finish-status { min-height:1.5em; margin-top:14px; color:var(--yellow); font-size:.84rem; }
+    .certificate-watch-note { margin:18px 0 0; padding:14px 16px; border-left:2px solid var(--yellow); background:rgba(254,183,55,.05); color:var(--grey-1); font-size:.84rem; line-height:1.55; }
 
     .lesson-comments { margin-top:42px; padding-top:34px; border-top:1px solid var(--line); }
     .lesson-comments__head { display:flex; align-items:end; justify-content:space-between; gap:20px; margin-bottom:20px; }
@@ -1359,6 +1360,17 @@
       .lesson-list-head { align-items:flex-start; flex-direction:column; gap:6px; }
       .lesson-finish { padding:24px 18px; }
       .nps-scale { grid-template-columns:repeat(6,minmax(0,1fr)); }
+      .lesson-comments__form-row { align-items:stretch; flex-direction:column; }
+      .lesson-comments__form-row .lesson-btn { width:100%; }
+      .lesson-sidebar { border-left:0; border-right:0; }
+      .lesson-player { margin-left:-18px; margin-right:-18px; border-left:0; border-right:0; }
+    }
+    @media (max-width: 520px) {
+      .lesson-wrap { padding-left:16px; padding-right:16px; }
+      .lesson-actions { grid-template-columns:1fr; }
+      .lesson-actions #mark-done { grid-column:auto; grid-row:auto; }
+      .nps-scale { grid-template-columns:repeat(4,minmax(0,1fr)); }
+      .lesson-comment__top { align-items:flex-start; flex-direction:column; gap:4px; }
     }
 
   
@@ -1736,6 +1748,7 @@
               <div class="field"><label for="nps-comment">Comentário (opcional)</label><textarea id="nps-comment" maxlength="1000" placeholder="Conte como foi sua experiência"></textarea></div>
             </div>
             <button class="lesson-btn lesson-btn--primary" id="certificate-btn" type="button">Enviar feedback e resgatar certificado</button>
+            <p class="certificate-watch-note" id="certificate-watch-note">O certificado é liberado quando o progresso de visualização da trilha atinge o mínimo necessário.</p>
             <p class="finish-status" id="finish-status" role="status"></p>
           </section>
         </div>
@@ -2561,6 +2574,9 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
   const detailScreen = byId('trail-detail-screen');
   const player = byId('lesson-player');
   const playerPlaceholder = player.innerHTML;
+  let activeVideoTracker = null;
+  let youtubeApiPromise = null;
+  const watchBucketsSent = new Set();
 
   let session = null;
   let pendingTrail = null;
@@ -2873,7 +2889,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     if (!alvo) throw new Error('Esta trilha não está disponível no momento.');
     const { data: aulasData, error: aulasError } = await db
       .from('aulas')
-      .select('id,titulo,vimeo_id,video_provider,duracao,ordem,descricao')
+      .select('id,titulo,vimeo_id,video_provider,duracao,ordem,descricao,video_duration_seconds')
       .eq('trilha_id',alvo.id)
       .order('ordem',{ascending:true});
     if (aulasError) throw aulasError;
@@ -2884,6 +2900,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
         id: aula.id, title: aula.titulo || 'Aula ' + (index+1),
         summary: aula.descricao || 'Assista ao conteúdo e marque a aula como concluída para avançar na trilha.',
         duration: aula.duracao || '',
+        videoDurationSeconds: Number(aula.video_duration_seconds)||0,
         videoUrl: aula.vimeo_id ? (aula.video_provider === 'youtube' ? 'https://youtu.be/' + aula.vimeo_id : 'https://vimeo.com/' + aula.vimeo_id) : ''
       }))
     };
@@ -2899,7 +2916,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     }
     if (videoUrl.includes('youtube.com/') || videoUrl.includes('youtu.be/')) {
       const match = videoUrl.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-      if (match) return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1`;
+      if (match) return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
     }
     return videoUrl;
   }
@@ -2959,7 +2976,91 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     if (error) console.error('Erro ao registrar visualização:', error);
   }
 
+  function stopVideoTracking() {
+    if (!activeVideoTracker) return;
+    try { activeVideoTracker.stop?.(); } catch (error) { console.warn('Falha ao encerrar rastreamento:', error); }
+    activeVideoTracker = null;
+  }
+
+  async function recordWatchPoint(lesson, seconds, duration) {
+    const dur=Math.round(Number(duration)||0);
+    const sec=Math.max(0,Number(seconds)||0);
+    if (!current || !session?.user?.id || !lesson?.id || dur<=0) return;
+    const bucket=Math.floor(sec/5)*5;
+    if (bucket<0 || bucket>=dur) return;
+    const key=`${current.slug}:${lesson.id}:${bucket}`;
+    if (watchBucketsSent.has(key)) return;
+    watchBucketsSent.add(key);
+    const {error}=await db.rpc('record_lesson_watch_bucket',{
+      p_trail_slug:current.slug,
+      p_lesson_id:String(lesson.id),
+      p_bucket_start:bucket,
+      p_duration_seconds:dur
+    });
+    if (error) {
+      watchBucketsSent.delete(key);
+      console.error('Erro ao registrar tempo assistido:',error);
+    } else {
+      lesson.videoDurationSeconds=Math.max(Number(lesson.videoDurationSeconds)||0,dur);
+      updateWatchProgressUi();
+    }
+  }
+
+  function ensureYouTubeApi() {
+    if (window.YT?.Player) return Promise.resolve(window.YT);
+    if (youtubeApiPromise) return youtubeApiPromise;
+    youtubeApiPromise=new Promise(resolve=>{
+      const previous=window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady=()=>{ try { previous?.(); } catch {} resolve(window.YT); };
+      if (!document.querySelector('script[data-youtube-api]')) {
+        const script=document.createElement('script');
+        script.src='https://www.youtube.com/iframe_api';
+        script.dataset.youtubeApi='1';
+        document.head.append(script);
+      }
+    });
+    return youtubeApiPromise;
+  }
+
+  async function trackVimeoIframe(iframe,lesson) {
+    if (!window.Vimeo?.Player) {
+      await new Promise((resolve,reject)=>{
+        const existing=document.querySelector('script[data-vimeo-api]');
+        if (existing) { existing.addEventListener('load',resolve,{once:true}); existing.addEventListener('error',reject,{once:true}); return; }
+        const script=document.createElement('script');
+        script.src='https://player.vimeo.com/api/player.js';
+        script.dataset.vimeoApi='1';
+        script.onload=resolve; script.onerror=reject; document.head.append(script);
+      });
+    }
+    const vimeo=new window.Vimeo.Player(iframe);
+    const handler=data=>recordWatchPoint(lesson,data.seconds,data.duration);
+    vimeo.on('timeupdate',handler);
+    activeVideoTracker={stop:()=>{ try { vimeo.off('timeupdate',handler); } catch {} }};
+  }
+
+  async function trackYouTubeIframe(iframe,lesson) {
+    await ensureYouTubeApi();
+    let timer=null;
+    const yt=new window.YT.Player(iframe,{
+      events:{
+        onStateChange:event=>{
+          if (event.data===window.YT.PlayerState.PLAYING) {
+            clearInterval(timer);
+            timer=setInterval(()=>{
+              try { recordWatchPoint(lesson,yt.getCurrentTime(),yt.getDuration()); } catch {}
+            },1500);
+          } else {
+            clearInterval(timer); timer=null;
+          }
+        }
+      }
+    });
+    activeVideoTracker={stop:()=>{ clearInterval(timer); try { yt.destroy(); } catch {} }};
+  }
+
   function renderVideo(lesson,index) {
+    stopVideoTracking();
     const embed = buildEmbedUrl(lesson.videoUrl);
     if (!embed) {
       player.innerHTML = playerPlaceholder;
@@ -2970,7 +3071,40 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     const iframe = document.createElement('iframe');
     iframe.src = embed; iframe.title = `Aula ${index+1} · ${lesson.title}`;
     iframe.allow = 'autoplay; fullscreen; picture-in-picture'; iframe.allowFullscreen = true;
+    iframe.id=`lesson-video-${String(lesson.id).replace(/[^a-zA-Z0-9_-]/g,'')}`;
     player.replaceChildren(iframe);
+    if (embed.includes('player.vimeo.com')) trackVimeoIframe(iframe,lesson).catch(error=>console.error('Rastreamento Vimeo indisponível:',error));
+    else if (embed.includes('youtube.com/embed')) trackYouTubeIframe(iframe,lesson).catch(error=>console.error('Rastreamento YouTube indisponível:',error));
+  }
+
+  async function calculateWatchProgress() {
+    if (!current) return {percent:0,watched:0,total:0};
+    const durations=new Map();
+    current.lessons.forEach(l=>{ if(Number(l.videoDurationSeconds)>0) durations.set(String(l.id),Number(l.videoDurationSeconds)); });
+    const total=current.lessons.reduce((sum,l)=>sum+(durations.get(String(l.id))||0),0);
+    let watched=0;
+    watchBucketsSent.forEach(key=>{
+      const parts=String(key).split(':');
+      const bucket=Number(parts.pop())||0;
+      const lessonId=parts.pop();
+      const slug=parts.join(':');
+      if(slug!==current.slug) return;
+      const dur=durations.get(String(lessonId))||0;
+      if(!dur) return;
+      watched+=Math.max(0,Math.min(5,dur-bucket));
+    });
+    const percent=total>0?Math.min(100,Math.round((watched/total)*100)):0;
+    return {percent,watched,total};
+  }
+
+  async function updateWatchProgressUi() {
+    const progress=await calculateWatchProgress();
+    if (!current) return progress;
+    byId('lesson-progress-label').textContent = progress.total>0 ? 'Progresso de visualização da trilha' : `${current.completed.size} de ${current.lessons.length} aulas concluídas`;
+    const visualPercent=progress.total>0?progress.percent:Math.round(current.completed.size/current.lessons.length*100);
+    byId('lesson-progress').style.width=`${visualPercent}%`;
+    byId('lesson-progress-percent').textContent=`${visualPercent}%`;
+    return progress;
   }
 
   function formatCommentDate(value) {
@@ -3076,6 +3210,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     byId('lesson-progress-label').textContent = `${done.size} de ${lessons.length} aulas concluídas`;
     byId('lesson-progress').style.width = `${percent}%`;
     byId('lesson-progress-percent').textContent = `${percent}%`;
+    updateWatchProgressUi();
 
     const previous = byId('previous-lesson');
     previous.disabled = currentLesson === 0;
@@ -3138,13 +3273,18 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     }
   }
 
-  function renderFinish() {
+  async function renderFinish() {
     const finished = current.completed.size === current.lessons.length;
     byId('lesson-finish').hidden = !finished;
     if (!finished) return;
     byId('finish-feedback').hidden = feedbackDone;
-    byId('certificate-btn').textContent = feedbackDone ? 'Baixar certificado' : 'Enviar feedback e resgatar certificado';
+    byId('certificate-btn').textContent = feedbackDone ? 'Resgatar certificado' : 'Enviar feedback e resgatar certificado';
     byId('nps-scale').querySelectorAll('button').forEach(button => button.setAttribute('aria-checked', String(Number(button.dataset.score)===npsScore)));
+    const progress=await updateWatchProgressUi();
+    const note=byId('certificate-watch-note');
+    if(note) note.textContent=progress.total>0
+      ? `Seu progresso de visualização está em ${progress.percent}%. Continue assistindo às aulas até o certificado ser liberado.`
+      : 'O certificado é liberado quando o progresso de visualização da trilha atinge o mínimo necessário.';
   }
 
   async function claimCertificate() {
@@ -3153,27 +3293,28 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     button.disabled=true;
     try {
       if (!feedbackDone) {
-        setStatus('finish-status','Enviando feedback…');
+        setStatus('finish-status','Enviando feedback...');
         const { error } = await db.rpc('record_trilha_nps_resposta', { p_email:session.user.email, p_trail_slug:current.slug, p_score:npsScore, p_nome:userName()||null, p_comentario:byId('nps-comment').value.trim()||null });
         if (error) throw new Error('Não foi possível enviar seu feedback agora.');
-        feedbackDone=true; renderFinish();
+        feedbackDone=true; await renderFinish();
       }
 
-      setStatus('finish-status','Gerando certificado…');
+      setStatus('finish-status','Verificando seu progresso de visualização...');
       const { data, error } = await db.rpc('emitir_certificado', { p_trilha_slug:current.slug, p_origem:'hub' });
-      if (!error && data) {
-        const cert = Array.isArray(data) ? data[0] : data;
-        const validacao = new URL('./validar-certificado.html', window.location.href).href;
-        await window.FundaceCertificado.baixar({ nome:cert.nome_impresso, curso:{id:current.slug,title:cert.trilha_titulo,certificateSlug:current.slug}, lessons:current.lessons, completedIds:[...current.completed], codigo:cert.codigo, validacaoUrl:validacao, emitidoEm:cert.emitido_em });
-        setStatus('finish-status',`Certificado ${cert.codigo} gerado.`);
-      } else {
-        // Compatibilidade com o banco atual: o registro servidor-side de certificados ainda não foi instalado.
-        const fallbackCode = 'FDC-' + crypto.randomUUID().replace(/-/g,'').slice(0,12).toUpperCase();
-        await window.FundaceCertificado.baixar({ nome:userName() || session.user.email, curso:{id:current.slug,title:current.title,certificateSlug:current.slug}, lessons:current.lessons, completedIds:[...current.completed], codigo:fallbackCode, validacaoUrl:'', emitidoEm:new Date().toISOString() });
-        setStatus('finish-status','Certificado gerado. A validação online será ativada na etapa de publicação final.');
+      if (error) {
+        const msg=String(error.message||'');
+        if (/continue assistindo/i.test(msg)) throw new Error('Continue assistindo às aulas para liberar seu certificado.');
+        throw new Error('Não foi possível gerar o certificado agora.');
       }
-    } catch (error) { console.error(error); setStatus('finish-status',error.message || 'Não foi possível gerar o certificado.'); }
-    finally { button.disabled=false; }
+      const cert = Array.isArray(data) ? data[0] : data;
+      if (!cert?.codigo) throw new Error('Não foi possível gerar o certificado agora.');
+      const validacao = new URL('./validar-certificado.html', window.location.href).href;
+      await window.FundaceCertificado.baixar({ nome:cert.nome_impresso, curso:{id:current.slug,title:cert.trilha_titulo,certificateSlug:current.slug}, lessons:current.lessons, completedIds:[...current.completed], codigo:cert.codigo, validacaoUrl:validacao, emitidoEm:cert.emitido_em });
+      setStatus('finish-status',`Certificado ${cert.codigo} gerado.`);
+    } catch (error) {
+      console.error(error);
+      setStatus('finish-status',error.message || 'Não foi possível gerar o certificado.');
+    } finally { button.disabled=false; }
   }
 
   function readRegisterForm() {
