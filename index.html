@@ -1321,6 +1321,24 @@
     .nps-score[aria-checked="true"] { border-color:var(--yellow); color:var(--yellow); background:rgba(254,183,55,.07); }
     .finish-status { min-height:1.5em; margin-top:14px; color:var(--yellow); font-size:.84rem; }
 
+    .lesson-comments { margin-top:42px; padding-top:34px; border-top:1px solid var(--line); }
+    .lesson-comments__head { display:flex; align-items:end; justify-content:space-between; gap:20px; margin-bottom:20px; }
+    .lesson-comments__head h2 { font-family:var(--font-display); font-size:1.55rem; letter-spacing:-.03em; }
+    .lesson-comments__head p { color:var(--grey-2); font-size:.78rem; }
+    .lesson-comments__form { display:grid; gap:12px; padding:20px; border:1px solid #292929; background:#0b0b0b; }
+    .lesson-comments__form textarea { width:100%; min-height:110px; resize:vertical; border:1px solid #303030; background:#080808; color:var(--white); padding:14px 15px; font:inherit; line-height:1.55; }
+    .lesson-comments__form textarea:focus { border-color:var(--yellow); outline:none; }
+    .lesson-comments__form-row { display:flex; justify-content:space-between; align-items:center; gap:14px; }
+    .lesson-comments__hint { color:var(--grey-2); font-size:.76rem; line-height:1.45; }
+    .lesson-comments__status { min-height:1.4em; color:var(--yellow); font-size:.8rem; }
+    .lesson-comments__list { display:grid; gap:12px; margin-top:20px; }
+    .lesson-comment { padding:18px 20px; border:1px solid #252525; background:#090909; }
+    .lesson-comment__top { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:8px; }
+    .lesson-comment__author { font-weight:600; font-size:.88rem; }
+    .lesson-comment__date { color:var(--grey-2); font-size:.72rem; white-space:nowrap; }
+    .lesson-comment__text { color:var(--grey-1); font-size:.9rem; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .lesson-comments__empty { padding:18px 0 0; color:var(--grey-2); font-size:.86rem; }
+
     @media (max-width: 980px) {
       .lesson-layout { grid-template-columns:1fr; }
       .lesson-sidebar { position:static; max-height:none; }
@@ -1688,6 +1706,27 @@
             <button class="lesson-btn" id="mark-done" type="button">✓ Marcar como concluída</button>
             <button class="lesson-btn lesson-btn--primary" id="next-lesson" type="button">Próxima aula →</button>
           </div>
+
+          <section class="lesson-comments" aria-labelledby="lesson-comments-title">
+            <div class="lesson-comments__head">
+              <div>
+                <h2 id="lesson-comments-title">Comentários da aula</h2>
+                <p>Compartilhe uma dúvida, reflexão ou aplicação prática.</p>
+              </div>
+              <span id="lesson-comments-count" class="lesson-comments__hint"></span>
+            </div>
+            <form class="lesson-comments__form" id="lesson-comment-form">
+              <textarea id="lesson-comment-text" maxlength="1000" required placeholder="Escreva seu comentário sobre esta aula"></textarea>
+              <div class="lesson-comments__form-row">
+                <div>
+                  <p class="lesson-comments__hint">Seu comentário será enviado para moderação antes de aparecer para outros alunos.</p>
+                  <p class="lesson-comments__status" id="lesson-comment-status" role="status"></p>
+                </div>
+                <button class="lesson-btn lesson-btn--primary" type="submit">Enviar comentário</button>
+              </div>
+            </form>
+            <div class="lesson-comments__list" id="lesson-comments-list" aria-live="polite"></div>
+          </section>
 
           <section class="lesson-finish" id="lesson-finish" hidden aria-labelledby="finish-title">
             <div class="lesson-list-head"><h2 id="finish-title">Trilha concluída</h2><span>Feedback e certificado</span></div>
@@ -2531,6 +2570,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
   let dynamicTrails = null;
   let feedbackDone = false;
   let npsScore = null;
+  let commentRequestSeq = 0;
   let pendingProfile = null;
   let activeOfficialTrail = null;
   const trailMetaBySlug = new Map();
@@ -2933,6 +2973,93 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     player.replaceChildren(iframe);
   }
 
+  function formatCommentDate(value) {
+    try {
+      return new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short',year:'numeric'}).format(new Date(value));
+    } catch { return ''; }
+  }
+
+  async function loadLessonComments(lessonId) {
+    const list=byId('lesson-comments-list');
+    const count=byId('lesson-comments-count');
+    const status=byId('lesson-comment-status');
+    if (!list || !count) return;
+    const seq=++commentRequestSeq;
+    list.innerHTML='<p class="lesson-comments__empty">Carregando comentários...</p>';
+    count.textContent='';
+    if (status) status.textContent='';
+    const {data,error}=await db
+      .from('comments')
+      .select('id,name,text,created_at')
+      .eq('lesson_id',String(lessonId))
+      .eq('status','approved')
+      .eq('approved',true)
+      .order('created_at',{ascending:false});
+    if (seq!==commentRequestSeq) return;
+    if (error) {
+      console.error('Erro ao carregar comentários:',error);
+      list.innerHTML='<p class="lesson-comments__empty">Não foi possível carregar os comentários agora.</p>';
+      return;
+    }
+    const comments=data||[];
+    count.textContent=comments.length ? `${comments.length} ${comments.length===1?'comentário':'comentários'}` : '';
+    list.replaceChildren();
+    if (!comments.length) {
+      const empty=document.createElement('p');
+      empty.className='lesson-comments__empty';
+      empty.textContent='Ainda não há comentários aprovados nesta aula. Você pode ser o primeiro a contribuir.';
+      list.append(empty);
+      return;
+    }
+    comments.forEach(comment=>{
+      const article=document.createElement('article');
+      article.className='lesson-comment';
+      const top=document.createElement('div');
+      top.className='lesson-comment__top';
+      const author=document.createElement('span');
+      author.className='lesson-comment__author';
+      author.textContent=String(comment.name||'Aluno Fundace');
+      const date=document.createElement('time');
+      date.className='lesson-comment__date';
+      date.textContent=formatCommentDate(comment.created_at);
+      const text=document.createElement('p');
+      text.className='lesson-comment__text';
+      text.textContent=String(comment.text||'');
+      top.append(author,date);
+      article.append(top,text);
+      list.append(article);
+    });
+  }
+
+  async function submitLessonComment(event) {
+    event.preventDefault();
+    const lesson=current?.lessons?.[currentLesson];
+    if (!lesson || !session?.user?.id) return;
+    const textarea=byId('lesson-comment-text');
+    const text=String(textarea?.value||'').trim();
+    if (!text) { setStatus('lesson-comment-status','Escreva um comentário antes de enviar.'); return; }
+    const button=event.submitter;
+    if (button) button.disabled=true;
+    setStatus('lesson-comment-status','Enviando comentário...');
+    const author=(userName() || String(session.user.email||'').split('@')[0] || 'Aluno Fundace').slice(0,120);
+    const {error}=await db.from('comments').insert({
+      lesson_id:String(lesson.id),
+      name:author,
+      text:text.slice(0,1000),
+      user_id:session.user.id,
+      status:'pending',
+      approved:false
+    });
+    if (button) button.disabled=false;
+    if (error) {
+      console.error('Erro ao enviar comentário:',error);
+      setStatus('lesson-comment-status','Não foi possível enviar seu comentário agora.');
+      return;
+    }
+    if (textarea) textarea.value='';
+    setStatus('lesson-comment-status','Comentário enviado. Ele aparecerá após aprovação da equipe Fundace.');
+  }
+
   function renderLesson() {
     const lessons = current.lessons;
     const data = lessons[currentLesson];
@@ -2943,6 +3070,9 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     byId('lesson-title').textContent = data.title;
     byId('lesson-summary').textContent = data.summary;
     renderVideo(data,currentLesson);
+    loadLessonComments(data.id);
+    const commentText=byId('lesson-comment-text');
+    if (commentText) commentText.value='';
     byId('lesson-progress-label').textContent = `${done.size} de ${lessons.length} aulas concluídas`;
     byId('lesson-progress').style.width = `${percent}%`;
     byId('lesson-progress-percent').textContent = `${percent}%`;
@@ -3148,6 +3278,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
   byId('previous-lesson').addEventListener('click',()=>{ if(!current||currentLesson===0)return; currentLesson-=1; renderLesson(); trackView(); document.querySelector('.lesson-main')?.scrollIntoView({behavior:reducedMotion.matches?'instant':'smooth',block:'start'}); });
   byId('next-lesson').addEventListener('click',()=>{ if(!current)return; currentLesson=(currentLesson+1)%current.lessons.length; renderLesson(); trackView(); document.querySelector('.lesson-main')?.scrollIntoView({behavior:reducedMotion.matches?'instant':'smooth',block:'start'}); });
   byId('certificate-btn').addEventListener('click',claimCertificate);
+  byId('lesson-comment-form').addEventListener('submit',submitLessonComment);
 
   // Tela intermediária real dentro do próprio HTML.
   const TRAIL_DETAILS = {
