@@ -1436,7 +1436,6 @@
   <div class="external-lp-bar">
     <div id="external-lp-name" class="external-lp-bar__name">Trilha Fundace</div>
     <div class="external-lp-bar__actions">
-      <a id="external-lp-open" href="#" target="_blank" rel="noopener">Abrir LP</a>
       <button id="external-lp-home" type="button">Voltar à Hub</button>
     </div>
   </div>
@@ -3265,7 +3264,6 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     byId('external-lp-status').classList.remove('is-active');
     const shell=byId('external-lp-shell');
     byId('external-lp-name').textContent=trail.nome||'Trilha Fundace';
-    byId('external-lp-open').href=url;
     byId('external-lp-frame').src=url;
     shell.classList.add('is-active'); shell.setAttribute('aria-hidden','false');
     document.body.style.overflow='hidden';
