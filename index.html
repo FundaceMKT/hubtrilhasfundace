@@ -2394,7 +2394,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
 
   // Monta o PDF e devolve os bytes.
   // opts: { nome, curso: { id, title, certificateSlug }, lessons, completedIds,
-  //         codigo?, validacaoUrl?, emitidoEm? }
+  //         codigo?, validacaoUrl?, emitidoEm?, cargaHoraria? }
   async function montar(opts) {
     const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
     const base64 = window.CERTIFICATE_TEMPLATE_BASE64;
@@ -2441,8 +2441,15 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     // Nome da pessoa
     drawCentered(name, height * 0.575 + contentShiftY, nameSize, fontBold, ink);
 
-    // "cumpriu a grade do curso"
-    drawCentered("cumpriu a grade do curso", height * 0.51 + contentShiftY, bodySize, fontItalic, inkSoft);
+    // Conclusão + carga horária oficial congelada no momento da emissão.
+    const cargaValor = Number(opts.cargaHoraria);
+    const cargaFormatada = Number.isFinite(cargaValor) && cargaValor > 0
+      ? cargaValor.toLocaleString("pt-BR", { maximumFractionDigits: 2 })
+      : "";
+    const completionText = cargaFormatada
+      ? `cumpriu a grade do curso, com carga horária de ${cargaFormatada} horas`
+      : "cumpriu a grade do curso";
+    drawCentered(completionText, height * 0.51 + contentShiftY, cargaFormatada ? bodySize * 0.92 : bodySize, fontItalic, inkSoft);
 
     // Nome da trilha
     const courseTitle = curso.title || "";
@@ -2699,7 +2706,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     const key=slugify(slug);
     if (!key) return null;
     if (trailMetaBySlug.has(key)) return trailMetaBySlug.get(key);
-    const {data,error}=await db.from('trilhas').select('id,nome,descricao,slug,status,lp_url,lp_ativa').eq('slug',key).maybeSingle();
+    const {data,error}=await db.from('trilhas').select('id,nome,descricao,slug,status,lp_url,lp_ativa,carga_horaria').eq('slug',key).maybeSingle();
     if (error) throw error;
     if (data) trailMetaBySlug.set(key,data);
     return data||null;
@@ -2895,7 +2902,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     if (aulasError) throw aulasError;
     const aulas = aulasData || [];
     return {
-      slug: slugify(alvo.slug), title: alvo.nome,
+      slug: slugify(alvo.slug), title: alvo.nome, cargaHoraria: Number(alvo.carga_horaria)||null,
       lessons: aulas.map((aula,index) => ({
         id: aula.id, title: aula.titulo || 'Aula ' + (index+1),
         summary: aula.descricao || 'Assista ao conteúdo e marque a aula como concluída para avançar na trilha.',
@@ -3339,8 +3346,17 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
       }
       const cert = Array.isArray(data) ? data[0] : data;
       if (!cert?.codigo) throw new Error('Não foi possível gerar o certificado agora.');
+      const { data: certStart } = await db
+        .from('user_trilha_starts')
+        .select('certificate_carga_horaria')
+        .eq('user_id', session.user.id)
+        .eq('trilha_slug', current.slug)
+        .order('started_at', { ascending:false })
+        .limit(1)
+        .maybeSingle();
+      const cargaHoraria = Number(certStart?.certificate_carga_horaria || current.cargaHoraria || 0) || null;
       const validacao = new URL('./validar-certificado.html', window.location.href).href;
-      await window.FundaceCertificado.baixar({ nome:cert.nome_impresso, curso:{id:current.slug,title:cert.trilha_titulo,certificateSlug:current.slug}, lessons:current.lessons, completedIds:[...current.completed], codigo:cert.codigo, validacaoUrl:validacao, emitidoEm:cert.emitido_em });
+      await window.FundaceCertificado.baixar({ nome:cert.nome_impresso, curso:{id:current.slug,title:cert.trilha_titulo,certificateSlug:current.slug}, lessons:current.lessons, completedIds:[...current.completed], codigo:cert.codigo, validacaoUrl:validacao, emitidoEm:cert.emitido_em, cargaHoraria });
       setStatus('finish-status',`Certificado ${cert.codigo} gerado.`);
     } catch (error) {
       console.error(error);
