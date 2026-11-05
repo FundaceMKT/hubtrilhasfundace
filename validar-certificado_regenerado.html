@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Validar certificado | Fundace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080808;--panel:#111;--line:#2a2a2a;--text:#f5f5f5;--muted:#9b9b9b;--yellow:#feb737;--green:#72dfa0;--red:#ff8b8b}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,rgba(254,183,55,.08),transparent 34%),var(--bg);color:var(--text);font-family:Inter,sans-serif;display:grid;place-items:center;padding:24px}.card{width:min(720px,100%);background:var(--panel);border:1px solid var(--line);padding:clamp(24px,5vw,48px)}.brand{font:700 18px "Space Grotesk";letter-spacing:.03em;margin-bottom:36px}.brand span{color:var(--yellow)}h1{font:700 clamp(2rem,6vw,4rem) "Space Grotesk";line-height:.98;letter-spacing:-.04em;margin:0 0 18px}.lead{color:var(--muted);line-height:1.65;margin:0 0 30px}.form{display:grid;grid-template-columns:1fr auto;gap:10px}.form input{min-height:50px;background:#080808;border:1px solid #333;color:#fff;padding:0 14px;font:600 15px Inter;text-transform:uppercase}.form input:focus{outline:none;border-color:var(--yellow)}.form button{min-height:50px;border:0;background:var(--yellow);color:#111;padding:0 22px;font-weight:800;cursor:pointer}.form button:disabled{opacity:.55;cursor:default}.status{min-height:24px;margin:14px 0 0;color:var(--muted);font-size:13px}.result{display:none;margin-top:30px;padding-top:26px;border-top:1px solid var(--line)}.result.show{display:block}.badge{display:inline-flex;padding:6px 9px;border-radius:999px;font-size:11px;font-weight:800;margin-bottom:18px}.badge.ok{background:rgba(114,223,160,.12);color:var(--green);border:1px solid rgba(114,223,160,.3)}.badge.bad{background:rgba(255,139,139,.1);color:var(--red);border:1px solid rgba(255,139,139,.28)}.result h2{font:700 24px "Space Grotesk";margin:0 0 18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.item{background:#0b0b0b;border:1px solid #252525;padding:14px}.item label{display:block;color:#777;font-size:10px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}.item div{font-size:14px;line-height:1.45}.foot{margin-top:30px;color:#666;font-size:11px;line-height:1.6}@media(max-width:620px){.form{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="brand">FUNDACE <span>USP</span></div>
+  <h1>Valide um certificado</h1>
+  <p class="lead">Digite o código exibido no certificado para confirmar sua autenticidade e os dados básicos de emissão.</p>
+  <form id="form" class="form">
+    <input id="code" autocomplete="off" spellcheck="false" placeholder="FDC-..." required>
+    <button id="submit" type="submit">Validar</button>
+  </form>
+  <p id="status" class="status" role="status"></p>
+  <section id="result" class="result" aria-live="polite"></section>
+  <p class="foot">A validação confirma apenas certificados registrados oficialmente na plataforma da Fundace.</p>
+</main>
+<script>
+const SUPABASE_URL='https://hasptpxcyavfdzxtwpws.supabase.co';const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhhc3B0cHhjeWF2ZmR6eHR3cHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMDA2MTYsImV4cCI6MjA5MTY3NjYxNn0.5TTFlqGtVl9AqWDzPTylquWRB1QdP1YXxPQRGfu5B68';
+const result=document.getElementById('result');
+const statusEl=document.getElementById('status');
+const form=document.getElementById('form');
+const input=document.getElementById('code');
+const button=document.getElementById('submit');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate=value=>{if(!value)return '—';const d=new Date(value);return Number.isNaN(d.getTime())?'—':d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})};
+function showInvalid(message='Certificado não encontrado.'){
+  result.className='result show';
+  result.innerHTML='<span class="badge bad">Não validado</span><h2>'+esc(message)+'</h2><p class="lead" style="margin:0">Confira o código informado. Certificados válidos precisam estar registrados na plataforma.</p>';
+}
+function showValid(cert){
+  result.className='result show';
+  result.innerHTML='<span class="badge ok">Certificado válido</span><h2>Registro confirmado</h2><div class="grid"><div class="item"><label>Aluno</label><div>'+esc(cert.name||'—')+'</div></div><div class="item"><label>Trilha</label><div>'+esc(cert.trail||'—')+'</div></div><div class="item"><label>Data de emissão</label><div>'+fmtDate(cert.issuedAt)+'</div></div><div class="item"><label>Código</label><div>'+esc(cert.code||'—')+'</div></div></div>';
+}
+async function validateCertificate(code){
+  const response=await fetch(SUPABASE_URL+'/functions/v1/validate-certificate',{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON_KEY},body:JSON.stringify({code})});
+  const body=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(body.error||'Não foi possível validar o certificado agora.');
+  return body;
+}
+form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const code=input.value.trim().toUpperCase();
+  if(!code)return;
+  button.disabled=true;result.className='result';statusEl.textContent='Consultando registro...';
+  try{const data=await validateCertificate(code);statusEl.textContent='';if(data.valid&&data.certificate)showValid(data.certificate);else showInvalid();}
+  catch(err){statusEl.textContent='';showInvalid(err.message||'Não foi possível validar o certificado agora.');}
+  finally{button.disabled=false;}
+});
+const initial=new URLSearchParams(location.search).get('codigo');if(initial){input.value=initial;form.requestSubmit();}
+</script>
+</body>
+</html>
