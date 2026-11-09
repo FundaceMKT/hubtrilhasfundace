@@ -2842,7 +2842,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     if (dynamicTrails && !force) return dynamicTrails;
     const { data, error } = await db
       .from('trilhas')
-      .select('id, nome, descricao, slug, status, lp_url, lp_ativa, criada_em')
+      .select('id, nome, descricao, slug, status, lp_url, lp_ativa, criada_em, carga_horaria')
       .eq('status','publicada')
       .order('criada_em',{ascending:true});
     if (error) throw error;
@@ -2881,16 +2881,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
   }
 
   async function resolveTrail(cardSlug) {
-    const staticKey = ({ contifrs:'ifrs', 'gestao-producao-ia':'gestao' }[cardSlug] || cardSlug);
-    const estatica = (window.FUNDACE_TRILHAS_ESTATICAS || {})[staticKey];
-    if (estatica) {
-      return {
-        slug: estatica.id, title: estatica.title,
-        lessons: estatica.lessons.map(lesson => ({
-          id: lesson.id, title: lesson.title, summary: (lesson.highlights || [])[0] || estatica.description, duration: lesson.duration || '', videoUrl: lesson.videoUrl || ''
-        }))
-      };
-    }
+    cardSlug = canonicalTrailSlug(cardSlug);
     const trilhas = await loadDynamicTrails();
     const alvo = trilhas.find(t => slugify(t.slug) === slugify(cardSlug));
     if (!alvo) throw new Error('Esta trilha não está disponível no momento.');
@@ -2942,15 +2933,43 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
       console.warn('Não foi possível consultar o override de progresso:', error);
       return null;
     }
-    const value=Number(data?.watch_progress_override_percent);
+    if (data?.watch_progress_override_percent == null) return null;
+    const value=Number(data.watch_progress_override_percent);
     return Number.isFinite(value) ? value : null;
   }
 
+  function legacyLessonsForTrail(slug) {
+    const key=({contifrs:'ifrs','gestao-producao-ia':'gestao'}[slug]||slug);
+    return (window.FUNDACE_TRILHAS_ESTATICAS||{})[key]?.lessons||[];
+  }
+
+  function videoIdentity(url) {
+    const youtube=String(url||'').match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    if(youtube)return 'youtube:'+youtube[1];
+    const vimeo=String(url||'').match(/vimeo\.com\/(\d+)/);
+    return vimeo?'vimeo:'+vimeo[1]:String(url||'');
+  }
+
   async function loadProgress(trail) {
-    const ids = trail.lessons.map(lesson => lesson.id);
     const { data, error } = await db.from('user_lesson_progress').select('lesson_id').eq('user_id', session.user.id);
     if (error) throw error;
-    return new Set((data || []).map(row => row.lesson_id).filter(id => ids.includes(id)));
+    const saved=new Set((data||[]).map(row=>String(row.lesson_id))),legacy=legacyLessonsForTrail(trail.slug);
+    // Keep historical completions without creating replacement progress records.
+    if(legacy.length&&legacy.every(lesson=>saved.has(String(lesson.id))))return new Set(trail.lessons.map(lesson=>lesson.id));
+    const oldVideos=new Set(legacy.filter(lesson=>saved.has(String(lesson.id))).map(lesson=>videoIdentity(lesson.videoUrl)));
+    return new Set(trail.lessons.filter(lesson=>saved.has(String(lesson.id))||oldVideos.has(videoIdentity(lesson.videoUrl))).map(lesson=>lesson.id));
+  }
+
+  async function loadWatchBuckets(trail) {
+    watchBucketsSent.clear();
+    const ids=new Set(trail.lessons.map(lesson=>String(lesson.id)));
+    const rows=[];
+    for(let from=0;;from+=1000){
+      const {data,error}=await db.from('lesson_watch_buckets').select('lesson_id,bucket_start,duration_seconds').eq('user_id',session.user.id).eq('trail_slug',trail.slug).order('lesson_id').order('bucket_start').range(from,from+999);
+      if(error)throw error;
+      rows.push(...(data||[]));if(!data||data.length<1000)break;
+    }
+    for(const row of rows){if(!ids.has(String(row.lesson_id)))continue;watchBucketsSent.add(`${trail.slug}:${row.lesson_id}:${row.bucket_start}`);const lesson=trail.lessons.find(l=>String(l.id)===String(row.lesson_id));if(lesson)lesson.videoDurationSeconds=Math.max(Number(lesson.videoDurationSeconds)||0,Number(row.duration_seconds)||0);}
   }
 
   async function checkFeedback(trail) {
@@ -2977,6 +2996,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
       const trail = await resolveTrail(cardSlug);
       if (!trail.lessons.length) throw new Error('Esta trilha ainda não tem aulas publicadas.');
       await ensureEnrollment(cardSlug, trail);
+      await loadWatchBuckets(trail);
       const watchProgressOverride = await loadWatchProgressOverride(trail.slug);
       const completed = watchProgressOverride !== null && watchProgressOverride >= 100
         ? new Set(trail.lessons.map(lesson => lesson.id))
@@ -3697,3 +3717,4 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
 
 </body>
 </html>
+
