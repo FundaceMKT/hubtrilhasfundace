@@ -3145,15 +3145,16 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
       if(!dur) return;
       watched+=Math.max(0,Math.min(5,dur-bucket));
     });
-    const percent=total>0?Math.min(100,Math.round((watched/total)*100)):0;
-    return {percent,watched,total};
+    const pendingDurations=current.lessons.filter(l=>!(Number(l.videoDurationSeconds)>0)).length;
+    const percent=total>0&&!pendingDurations?Math.min(100,Math.round((watched/total)*100)):0;
+    return {percent,watched,total,pendingDurations};
   }
 
   async function updateWatchProgressUi() {
     const progress=await calculateWatchProgress();
     if (!current) return progress;
-    byId('lesson-progress-label').textContent = progress.total>0 ? 'Progresso de visualização da trilha' : `${current.completed.size} de ${current.lessons.length} aulas concluídas`;
-    const visualPercent=progress.total>0?progress.percent:Math.round(current.completed.size/current.lessons.length*100);
+    byId('lesson-progress-label').textContent = progress.pendingDurations ? `Tempo assistido salvo. Abra os vídeos das ${progress.pendingDurations} aulas restantes para calcular o progresso total.` : progress.total>0 ? 'Progresso de visualização da trilha' : `${current.completed.size} de ${current.lessons.length} aulas concluídas`;
+    const visualPercent=progress.pendingDurations?0:progress.total>0?progress.percent:Math.round(current.completed.size/current.lessons.length*100);
     byId('lesson-progress').style.width=`${visualPercent}%`;
     byId('lesson-progress-percent').textContent=`${visualPercent}%`;
     return progress;
