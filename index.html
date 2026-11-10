@@ -2860,7 +2860,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
 
   function dynamicTrailCardMarkup(trail){
     const slug=slugify(trail.slug);
-    const desc=String(trail.descricao||'Explore esta trilha gratuita da Fundace.').trim();
+    const desc=String(trail.descricao||'Explore esta trilha gratuita da Fundace.').replace(/\bMBA\s+USP\b/gi,'MBA Fundace').trim();
     const image=TRAIL_CARD_IMAGES[slug]||DEFAULT_TRAIL_CARD_IMAGE;
     return `<li class="carousel__item" data-dynamic-trail="${escapeHtml(slug)}"><button class="trail-card" type="button" data-trilha="${escapeHtml(slug)}" style="--img:url('${escapeHtml(image)}')"><span class="trail-card__top"><svg class="trail-card__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></span><span><span class="trail-card__title">${escapeHtml(trail.nome||'Trilha Fundace')}</span><span class="trail-card__more"><span class="trail-card__desc"><span class="trail-card__desc-inner">${escapeHtml(desc)}</span></span></span></span></button></li>`;
   }
