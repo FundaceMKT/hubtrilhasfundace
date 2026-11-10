@@ -187,7 +187,9 @@
       letter-spacing: 0.14em;
       white-space: nowrap;
     }
-    .brand__slash { color: var(--yellow); margin-inline: 0.35em; }
+    .brand__logo { display:block; width:clamp(164px, 22vw, 250px); height:auto; }
+    .site-footer .brand__logo { width:220px; }
+    @media (max-width:520px) { .brand__logo { width:164px; } .site-header__inner { gap:12px; } }
 
     .nav {
       display: flex;
@@ -1517,7 +1519,7 @@
   <!-- 1. HEADER -->
   <header class="site-header">
     <div class="container site-header__inner">
-      <a class="brand" href="#hub" aria-label="Fundace USP — início">FUNDACE<span class="brand__slash" aria-hidden="true">/</span>USP</a>
+      <a class="brand" href="#hub" aria-label="Fundace USP — início"><img class="brand__logo" src="/assets/fundace-fea-rp-usp.svg" alt="Fundace FEA-RP USP" width="2048" height="411" decoding="async"></a>
       <nav class="nav" aria-label="Navegação principal">
         <a class="nav__link" id="nav-trails" href="#trilhas">Trilhas</a>
         <a class="nav__link nav__link--secondary" href="#como-funciona">Como funciona</a>
@@ -1767,7 +1769,7 @@
   <!-- 6. RODAPÉ -->
   <footer class="site-footer">
     <div class="container site-footer__inner">
-      <span class="brand">FUNDACE<span class="brand__slash" aria-hidden="true">/</span>USP</span>
+      <span class="brand"><img class="brand__logo" src="/assets/fundace-fea-rp-usp.svg" alt="Fundace FEA-RP USP" width="2048" height="411" decoding="async"></span>
       <p>Trilhas gratuitas para ampliar conhecimentos e competências.</p>
     </div>
   </footer>
