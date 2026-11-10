@@ -3335,9 +3335,13 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     byId('nps-scale').querySelectorAll('button').forEach(button => button.setAttribute('aria-checked', String(Number(button.dataset.score)===npsScore)));
     const progress=await updateWatchProgressUi();
     const note=byId('certificate-watch-note');
-    if(note) note.textContent=progress.total>0
-      ? `Seu progresso de visualização está em ${progress.percent}%. Continue assistindo às aulas até o certificado ser liberado.`
-      : 'O certificado é liberado quando o progresso de visualização da trilha atinge o mínimo necessário.';
+    if(note) note.textContent=progress.pendingDurations
+      ? 'Seu tempo assistido está salvo. Abra os vídeos das aulas restantes para calcular o progresso total da trilha.'
+      : progress.total>0 && progress.percent>=90
+        ? `Seu progresso de visualização está em ${progress.percent}%. Você já pode resgatar seu certificado.`
+        : progress.total>0
+          ? `Seu progresso de visualização está em ${progress.percent}%. Assista a pelo menos 90% da trilha para liberar seu certificado.`
+          : 'Assista a pelo menos 90% da trilha para liberar seu certificado.';
   }
 
   async function claimCertificate() {
@@ -3376,7 +3380,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
         .limit(1)
         .maybeSingle();
       const cargaHoraria = Number(certStart?.certificate_carga_horaria || current.cargaHoraria || 0) || null;
-      const validacao = new URL('./validar-certificado.html', window.location.href).href;
+      const validacao = new URL('/validar-certificado.html', window.location.origin).href;
       await window.FundaceCertificado.baixar({ nome:cert.nome_impresso, curso:{id:current.slug,title:cert.trilha_titulo,certificateSlug:current.slug}, lessons:current.lessons, completedIds:[...current.completed], codigo:cert.codigo, validacaoUrl:validacao, emitidoEm:cert.emitido_em, cargaHoraria });
       setStatus('finish-status',`Certificado ${cert.codigo} gerado.`);
     } catch (error) {
@@ -3476,7 +3480,7 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
   });
 
   byId('logout').addEventListener('click',async()=>{ await db.auth.signOut(); session=null; pendingTrail=null; current=null; setTrailInUrl(null); updateHeader(); showHub(false); });
-  byId('back-hub').addEventListener('click',()=>{ setTrailInUrl(null); current=null; showHub(true); });
+  byId('back-hub').addEventListener('click',()=>{ if(pathTrailSlug()){window.location.href='/';return;} setTrailInUrl(null); current=null; showHub(true); });
   byId('mark-done').addEventListener('click',async()=>{
     const lesson=current?.lessons[currentLesson]; if(!lesson||current.completed.has(lesson.id)) return;
     const b=byId('mark-done'); b.disabled=true; b.textContent='Salvando…';
