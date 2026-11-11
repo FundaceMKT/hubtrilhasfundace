@@ -1322,6 +1322,18 @@
     .nps-score { min-height:42px; border:1px solid #303030; background:#0d0d0d; color:var(--white); }
     .nps-score[aria-checked="true"] { border-color:var(--yellow); color:var(--yellow); background:rgba(254,183,55,.07); }
     .finish-status { min-height:1.5em; margin-top:14px; color:var(--yellow); font-size:.84rem; }
+    .finish-mba { margin:28px 0; padding:28px; background:var(--yellow); color:#0b0b0b; border-radius:18px; }
+    .finish-mba__eyebrow { display:block; margin-bottom:12px; font-size:.7rem; font-weight:700; letter-spacing:.12em; }
+    .finish-mba h3 { margin:0 0 12px; font-family:var(--font-display); font-size:clamp(1.35rem,3vw,1.8rem); line-height:1.15; }
+    .finish-mba p { margin:0 0 20px; line-height:1.6; font-size:.9rem; }
+    .finish-mba a { display:inline-flex; justify-content:center; align-items:center; min-height:46px; padding:12px 22px; background:#0b0b0b; color:#fff; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none; }
+    .finish-mba a:hover { background:#292929; }
+    .finish-mba a:focus-visible { outline:2px solid #0b0b0b; outline-offset:4px; }
+    body.is-feedback-preview > :not(#feedback-preview):not(script):not(style) { display:none!important; }
+    .feedback-preview { width:min(100%,960px); margin:0 auto; padding:36px 24px 60px; }
+    .feedback-preview__note { color:var(--grey-1); font-size:.85rem; line-height:1.6; margin:12px 0 24px; }
+    .feedback-preview .lesson-finish { margin-top:0; }
+    @media(max-width:620px) { .finish-mba { padding:24px 20px; } .finish-mba a { width:100%; } .feedback-preview { padding:24px 16px; } .feedback-preview .lesson-finish { padding:24px 18px; } }
     .certificate-watch-note { margin:18px 0 0; padding:14px 16px; border-left:2px solid var(--yellow); background:rgba(254,183,55,.05); color:var(--grey-1); font-size:.84rem; line-height:1.55; }
 
     .lesson-comments { margin-top:42px; padding-top:34px; border-top:1px solid var(--line); }
@@ -1749,6 +1761,12 @@
               <div class="nps-scale" id="nps-scale" role="radiogroup" aria-label="Nota de 0 a 10"></div>
               <div class="field"><label for="nps-comment">Comentário sobre sua experiência</label><textarea id="nps-comment" maxlength="1000" required placeholder="Conte como foi sua experiência"></textarea></div>
             </div>
+            <aside class="finish-mba" id="finish-mba" hidden aria-labelledby="finish-mba-title">
+              <span class="finish-mba__eyebrow">PRÓXIMO PASSO</span>
+              <h3 id="finish-mba-title">Seu desenvolvimento não precisa parar na trilha.</h3>
+              <p>Quando fizer sentido dar um passo maior, aprofunde esse caminho no <span id="finish-mba-name"></span>.</p>
+              <a id="finish-mba-link" target="_blank" rel="noopener noreferrer">Conhecer o MBA</a>
+            </aside>
             <button class="lesson-btn lesson-btn--primary" id="certificate-btn" type="button">Enviar feedback e resgatar certificado</button>
             <p class="certificate-watch-note" id="certificate-watch-note">O certificado é liberado quando o progresso de visualização da trilha atinge o mínimo necessário.</p>
             <p class="finish-status" id="finish-status" role="status"></p>
@@ -3328,10 +3346,51 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     }
   }
 
+  const FEEDBACK_MBAS = {
+    'semana-ia-no-direito': ['Gestão do Direito nas Empresas', 'mba-ead-gestao-do-direito-nas-empresas'],
+    'contifrs': ['Contabilidade em IFRS', 'mba-ead-usp-contabilidade-em-ifrs'],
+    'gestao-producao-ia': ['Produção e Operações e Aplicações em IA', 'mba-ead-producao-operacoes-ia'],
+    'gestao-projetos': ['Gestão de Projetos', 'mba-ead-gestao-de-projetos'],
+    'gestao-estrategica-ti': ['Gestão Estratégica da Tecnologia da Informação', 'mba-ead-gestao-estrategica-da-tecnologia-da-informacao'],
+    'financas': ['Finanças', 'mba-usp-ead-em-financas'],
+    'gedat': ['Gestão Estratégica Baseada em Dados', 'mba-ead-em-gestao-estrategica-baseada-em-dados'],
+    'trilha-de-marketing-estrategico': ['Gestão de Marketing Estratégico', 'mba-ead-usp-gestao-de-marketing-estrategico'],
+    'trilha-nova-de-marketing': ['Gestão de Marketing Estratégico', 'mba-ead-usp-gestao-de-marketing-estrategico']
+  };
+
+  function renderFeedbackMba(slug) {
+    const mba=FEEDBACK_MBAS[canonicalTrailSlug(slug)];
+    byId('finish-mba').hidden=!mba;
+    if(!mba) { byId('finish-mba-link').removeAttribute('href'); return; }
+    byId('finish-mba-name').textContent='MBA USP '+mba[0]+' - EAD';
+    byId('finish-mba-link').href='https://www.fundace.org.br/curso/'+mba[1];
+  }
+
+  function showFeedbackPreview(slug) {
+    const key=canonicalTrailSlug(slug);
+    if(!Object.prototype.hasOwnProperty.call(FEEDBACK_MBAS,key)) return false;
+    const preview=document.createElement('main');
+    preview.id='feedback-preview'; preview.className='feedback-preview';
+    const title=document.createElement('h1'); title.textContent='Prévia da box de feedback';
+    const note=document.createElement('p'); note.className='feedback-preview__note';
+    note.textContent='Visualização de demonstração. Nenhum feedback será enviado e nenhum certificado será emitido. O botão do MBA abre a página oficial do curso.';
+    const box=byId('lesson-finish');
+    box.hidden=false;
+    box.querySelectorAll('button,textarea').forEach(control=>{control.disabled=true;});
+    byId('certificate-watch-note').textContent='Na trilha, o resgate segue as regras de conclusão e visualização das aulas.';
+    renderFeedbackMba(key);
+    preview.append(title,note,box);
+    document.body.append(preview);
+    document.body.classList.add('is-feedback-preview');
+    document.title='Prévia do feedback | Trilhas Fundace';
+    return true;
+  }
+
   async function renderFinish() {
     const finished = current.completed.size === current.lessons.length;
     byId('lesson-finish').hidden = !finished;
     if (!finished) return;
+    renderFeedbackMba(current.slug);
     byId('finish-feedback').hidden = feedbackDone;
     byId('certificate-btn').textContent = feedbackDone ? 'Resgatar certificado' : 'Enviar feedback e resgatar certificado';
     byId('nps-scale').querySelectorAll('button').forEach(button => button.setAttribute('aria-checked', String(Number(button.dataset.score)===npsScore)));
@@ -3706,6 +3765,8 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
   byId('external-lp-home').addEventListener('click',()=>{window.location.href='/'});
 
   async function init(){
+    const feedbackPreview=new URLSearchParams(window.location.search).get('preview_feedback');
+    if(feedbackPreview && showFeedbackPreview(feedbackPreview)) return;
     const {data}=await db.auth.getSession(); session=data.session; updateHeader();
     const officialSlug=pathTrailSlug();
     if(officialSlug){pendingTrail=officialSlug;await openOfficialTrailRoute(officialSlug);return;}
