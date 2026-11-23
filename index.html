@@ -2552,8 +2552,15 @@ window.CERTIFICATE_TEMPLATE_BASE64 = 'JVBERi0xLjQKJfbk/N8KMSAwIG9iago8PAovVHlwZS
     link.href = url;
     const courseSlug = (opts.curso && opts.curso.certificateSlug) || "fundace";
     link.download = `certificado-${courseSlug}-${safeName || "aluno"}.pdf`;
+    link.style.display = "none";
+    document.body.appendChild(link);
+
     link.click();
-    URL.revokeObjectURL(url);
+
+    window.setTimeout(() => {
+      URL.revokeObjectURL(url);
+      link.remove();
+    }, 15000);
   }
 
   window.FundaceCertificado = { montar, baixar };
