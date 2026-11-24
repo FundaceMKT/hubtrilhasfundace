@@ -52,6 +52,7 @@
   </div>
   <p id="student-certificate-status" role="status" aria-live="polite"></p>
   <div class="modal-actions">
+    <button id="student-certificate-issue" class="btn primary hidden" type="button">Emitir certificado</button>
     <button id="student-certificate-download" class="btn primary hidden" type="button">Baixar certificado em PDF</button>
   </div>
 </dialog>
@@ -141,38 +142,52 @@ function renderStudents(){const rows=filteredStudents();const total=rows.length,
 
 const certificateDialog = document.getElementById('student-certificate-dialog');
 const certificateSelect = document.getElementById('student-certificate-trail');
+const certificateIssue = document.getElementById('student-certificate-issue');
 const certificateDownload = document.getElementById('student-certificate-download');
 const certificateStatus = document.getElementById('student-certificate-status');
 let certificateView = null;
 
 async function openStudentCertificate(student) {
-  const view = { student, records: [] };
+  const view = { student, records: new Map() };
   certificateView = view;
   document.getElementById('student-certificate-name').textContent = student.nome || student.email;
   certificateSelect.replaceChildren(new Option('Selecione a trilha', ''));
   certificateSelect.disabled = true;
   certificateDownload.disabled = false;
+  certificateIssue.disabled = false;
+  certificateIssue.classList.add('hidden');
   certificateDownload.classList.add('hidden');
   certificateStatus.textContent = 'Consultando certificados emitidos…';
   certificateDialog.showModal();
 
   try {
-    const { data, error } = await db.from('user_trilha_starts')
-      .select('id,trilha_id,trilha_slug,trilha_nome,certificate_code,certificate_issued_at,certificate_carga_horaria')
-      .eq('user_id', student.id)
-      .not('certificate_code', 'is', null)
-      .order('certificate_issued_at', { ascending: false });
-    if (error) throw error;
+    const [existing, manual] = await Promise.all([
+      db.from('user_trilha_starts')
+        .select('trilha_id,trilha_slug,trilha_nome,certificate_code,certificate_issued_at,certificate_carga_horaria')
+        .eq('user_id', student.id)
+        .not('certificate_code', 'is', null),
+      db.from('admin_trail_certificates')
+        .select('trilha_slug,trilha_nome,nome_impresso,certificate_code,certificate_issued_at,certificate_carga_horaria,lessons')
+        .eq('user_id', student.id)
+    ]);
+    if (existing.error || manual.error) throw existing.error || manual.error;
     if (certificateView !== view || !certificateDialog.open) return;
 
-    view.records = data || [];
-    for (const record of view.records) {
-      const title = record.trilha_nome || record.trilha_slug;
-      certificateSelect.add(new Option(title + ' · ' + record.certificate_code, record.id));
+    view.records = new Map([...(existing.data || []), ...(manual.data || [])]
+      .map(record => [record.trilha_slug, record]));
+    const choices = new Map(state.trails
+      .filter(trail => trail.status === 'publicada' && !trail.deleted_at)
+      .map(trail => [trail.slug, trail.nome]));
+    for (const [slug, record] of view.records) {
+      choices.set(slug, record.trilha_nome || choices.get(slug) || slug);
     }
-    certificateSelect.disabled = !view.records.length;
-    certificateStatus.textContent = view.records.length ? '' : 'Este aluno ainda não tem certificado emitido.';
-    if (view.records.length) certificateSelect.focus();
+    for (const [slug, title] of [...choices].sort((a, b) => a[1].localeCompare(b[1], 'pt-BR'))) {
+      const code = view.records.get(slug)?.certificate_code;
+      certificateSelect.add(new Option(title + (code ? ' · ' + code : ''), slug));
+    }
+    certificateSelect.disabled = !choices.size;
+    certificateStatus.textContent = choices.size ? '' : 'Nenhuma trilha disponível.';
+    if (choices.size) certificateSelect.focus();
   } catch (error) {
     if (certificateView === view && certificateDialog.open) {
       certificateStatus.textContent = 'Não foi possível consultar os certificados. Feche a janela e tente novamente.';
@@ -183,7 +198,7 @@ async function openStudentCertificate(student) {
 
 async function downloadStudentCertificate() {
   const view = certificateView;
-  const record = view?.records.find(item => String(item.id) === certificateSelect.value);
+  const record = view?.records.get(certificateSelect.value);
   if (!record || certificateDownload.disabled) return;
   certificateDownload.disabled = true;
   certificateSelect.disabled = true;
@@ -193,7 +208,7 @@ async function downloadStudentCertificate() {
     const slug = record.trilha_slug;
     const trail = state.trails.find(item => String(item.id) === String(record.trilha_id))
       || state.trails.find(item => item.slug === slug);
-    const lessons = state.aulas
+    const lessons = record.lessons || state.aulas
       .filter(lesson => trail && String(lesson.trilha_id) === String(trail.id))
       .map((lesson, index) => ({ id: lesson.id, title: lesson.titulo || 'Aula ' + (index + 1) }));
     const student = view.student;
@@ -205,10 +220,10 @@ async function downloadStudentCertificate() {
       throw new Error('Este certificado está sem data de emissão no registro.');
     }
     await window.FundaceCertificado.baixar({
-      nome: lead?.nome ?? student.nome ?? student.email,
-      curso: { id: slug, title: trail?.nome || record.trilha_nome || slug, certificateSlug: slug },
+      nome: record.nome_impresso ?? lead?.nome ?? student.nome ?? student.email,
+      curso: { id: slug, title: record.nome_impresso ? record.trilha_nome : (trail?.nome || record.trilha_nome || slug), certificateSlug: slug },
       lessons,
-      completedIds: [...progressIdsForUser(student.id)],
+      completedIds: record.lessons ? lessons.map(lesson => lesson.id) : [...progressIdsForUser(student.id)],
       codigo: record.certificate_code,
       validacaoUrl: new URL('/validar-certificado.html', window.location.origin).href,
       emitidoEm: record.certificate_issued_at,
@@ -233,10 +248,45 @@ document.getElementById('students-wrap').addEventListener('click', event => {
   if (student && !certificateDialog.open) openStudentCertificate(student);
 });
 certificateDialog.addEventListener('close', () => { if (!certificateDialog.open) certificateView = null; });
-certificateSelect.addEventListener('change', () => {
-  certificateDownload.classList.toggle('hidden', !certificateSelect.value);
-  certificateStatus.textContent = '';
-});
+function updateCertificateActions() {
+  const slug = certificateSelect.value;
+  const record = certificateView?.records.get(slug);
+  certificateIssue.classList.toggle('hidden', !slug || !!record);
+  certificateDownload.classList.toggle('hidden', !record);
+  certificateStatus.textContent = slug && !record ? 'A emissão manual fica registrada em seu nome.' : '';
+}
+
+async function issueStudentCertificate() {
+  const view = certificateView;
+  const slug = certificateSelect.value;
+  if (!view || !slug || view.records.has(slug) || certificateIssue.disabled) return;
+  certificateIssue.disabled = true;
+  certificateSelect.disabled = true;
+  certificateStatus.textContent = 'Emitindo certificado…';
+  try {
+    const { data, error } = await db.rpc('emitir_certificado_admin', {
+      p_user_id: view.student.id, p_trilha_slug: slug
+    }).single();
+    if (error) throw error;
+    if (certificateView !== view || !certificateDialog.open) return;
+    view.records.set(slug, data);
+    certificateSelect.selectedOptions[0].textContent = data.trilha_nome + ' · ' + data.certificate_code;
+    updateCertificateActions();
+    certificateStatus.textContent = 'Certificado emitido. O PDF já pode ser baixado.';
+    certificateDownload.focus();
+  } catch (error) {
+    if (certificateView === view) certificateStatus.textContent = errText(error);
+    console.error(error);
+  } finally {
+    if (certificateView === view) {
+      certificateIssue.disabled = false;
+      certificateSelect.disabled = false;
+    }
+  }
+}
+
+certificateSelect.addEventListener('change', updateCertificateActions);
+certificateIssue.addEventListener('click', issueStudentCertificate);
 certificateDownload.addEventListener('click', downloadStudentCertificate);
 
 function changeStudentPage(delta){state.studentPage+=delta;renderStudents();document.getElementById('students-wrap')?.scrollIntoView({behavior:'smooth',block:'start'})}
