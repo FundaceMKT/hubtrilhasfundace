@@ -3190,17 +3190,31 @@ window.FUNDACE_TRILHAS_ESTATICAS = {
       }
       const cert = Array.isArray(data) ? data[0] : data;
       if (!cert?.codigo) throw new Error('Não foi possível gerar o certificado agora.');
-      const { data: certStart } = await db
-        .from('user_trilha_starts')
-        .select('certificate_carga_horaria')
-        .eq('user_id', session.user.id)
-        .eq('trilha_slug', current.slug)
-        .order('started_at', { ascending:false })
-        .limit(1)
-        .maybeSingle();
-      const cargaHoraria = Number(certStart?.certificate_carga_horaria || current.cargaHoraria || 0) || null;
+      let lessons = current.lessons;
+      let completedIds = [...current.completed];
+      let cargaHoraria = Number(current.cargaHoraria || 0) || null;
+      if (cert.codigo.startsWith('FDC-ADM-')) {
+        const { data: manual, error: manualError } = await db.from('admin_trail_certificates')
+          .select('certificate_carga_horaria,lessons')
+          .eq('user_id', session.user.id)
+          .eq('certificate_code', cert.codigo)
+          .single();
+        if (manualError) throw manualError;
+        cargaHoraria = Number(manual.certificate_carga_horaria);
+        lessons = manual.lessons;
+        completedIds = lessons.map(lesson => lesson.id);
+      } else {
+        const { data: certStart } = await db.from('user_trilha_starts')
+          .select('certificate_carga_horaria')
+          .eq('user_id', session.user.id)
+          .eq('trilha_slug', current.slug)
+          .order('started_at', { ascending:false })
+          .limit(1)
+          .maybeSingle();
+        cargaHoraria = Number(certStart?.certificate_carga_horaria || cargaHoraria || 0) || null;
+      }
       const validacao = new URL('/validar-certificado.html', window.location.origin).href;
-      await window.FundaceCertificado.baixar({ nome:cert.nome_impresso, curso:{id:current.slug,title:cert.trilha_titulo,certificateSlug:current.slug}, lessons:current.lessons, completedIds:[...current.completed], codigo:cert.codigo, validacaoUrl:validacao, emitidoEm:cert.emitido_em, cargaHoraria });
+      await window.FundaceCertificado.baixar({ nome:cert.nome_impresso, curso:{id:current.slug,title:cert.trilha_titulo,certificateSlug:current.slug}, lessons, completedIds, codigo:cert.codigo, validacaoUrl:validacao, emitidoEm:cert.emitido_em, cargaHoraria });
       setStatus('finish-status',`Certificado ${cert.codigo} gerado.`);
     } catch (error) {
       console.error(error);
