@@ -22,6 +22,8 @@
 #student-certificate-dialog::backdrop{background:rgba(0,0,0,.75)}
 #student-certificate-status{font-size:13px;color:var(--muted);margin:12px 0 0}
 #student-certificate-status:empty{display:none}
+.nav-item-label{position:relative}
+.nav-item-label.has-unread::after{content:"";position:absolute;top:50%;left:calc(100% + 4px);width:5px;height:5px;transform:translateY(-50%);border-radius:50%;background:var(--yellow);pointer-events:none}
 #view-feedbacks .metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
 #view-feedbacks .toolbar>*{max-width:100%}
 #view-feedbacks .search{min-width:min(230px,100%)}
@@ -33,7 +35,7 @@
 @media(max-width:760px){#view-feedbacks .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body>
 <div id="login-screen" class="login-wrap"><form id="login-form" class="login-card"><h1>Admin <span style="color:#feb737">Fundace</span></h1><p>Entre com um usuário ativo do painel administrativo.</p><div id="login-error" class="errorbox hidden"></div><div class="field"><label>E-mail</label><input name="email" type="email" required autocomplete="username"></div><div class="field"><label>Senha</label><input name="password" type="password" required autocomplete="current-password"></div><button class="btn primary" style="width:100%;margin-top:6px" type="submit">Entrar</button></form></div>
-<div id="admin-app" class="app hidden"><aside class="sidebar"><div class="brand"><img src="/assets/fundace-fea-rp-usp.svg" alt="Fundace" width="164" height="33" decoding="async" style="display:inline-block;vertical-align:middle;max-width:100%;object-fit:contain;object-position:left center"><small>Hub de Trilhas · Admin</small></div><nav class="nav"><button data-view="overview" class="active">Visão geral</button><button data-view="students">Alunos</button><button data-view="leads">Leads</button><button data-view="trails">Trilhas</button><button data-view="comments">Comentários</button><button data-view="feedbacks">Feedbacks</button><button data-view="access">Acessos</button></nav><div class="side-foot">Dados em tempo real do Supabase<br><span id="sync-time"></span></div></aside>
+<div id="admin-app" class="app hidden"><aside class="sidebar"><div class="brand"><img src="/assets/fundace-fea-rp-usp.svg" alt="Fundace" width="164" height="33" decoding="async" style="display:inline-block;vertical-align:middle;max-width:100%;object-fit:contain;object-position:left center"><small>Hub de Trilhas · Admin</small></div><nav class="nav"><button data-view="overview" class="active">Visão geral</button><button data-view="students">Alunos</button><button data-view="leads">Leads</button><button data-view="trails">Trilhas</button><button data-view="comments"><span class="nav-item-label">Comentários</span></button><button data-view="feedbacks"><span class="nav-item-label">Feedbacks</span></button><button data-view="access">Acessos</button></nav><div class="side-foot">Dados em tempo real do Supabase<br><span id="sync-time"></span></div></aside>
 <main class="main"><div class="topbar"><div><h1 id="page-title">Visão geral</h1><p id="page-subtitle">Métricas reais de consumo e desempenho das aulas.</p></div><div class="userbox"><span id="admin-email" class="user-pill"></span><button id="refresh-btn" class="btn">Atualizar</button><button id="logout-btn" class="btn">Sair</button></div></div>
 <section id="view-overview" class="view active"><div id="overview-error"></div><div class="metrics"><div class="metric"><div class="label">Visualizações</div><div class="value" id="m-views">—</div><div class="hint">Soma de todas as visualizações</div></div><div class="metric"><div class="label">Alunos que assistiram</div><div class="value" id="m-viewers">—</div><div class="hint">Usuários únicos com visualização</div></div><div class="metric"><div class="label">Aulas concluídas</div><div class="value" id="m-progress">—</div><div class="hint">Registros de conclusão</div></div><div class="metric"><div class="label">Alunos com conclusão</div><div class="value" id="m-completers">—</div><div class="hint">Usuários únicos com ao menos uma aula concluída</div></div><div class="metric"><div class="label">Comentários pendentes</div><div class="value" id="m-comments">—</div><div class="hint">Aguardando moderação</div></div></div><div class="card"><div class="section-title"><h2>Aulas mais assistidas</h2><small>Visualizações acumuladas</small></div><div id="lesson-ranking" class="bars loading">Carregando...</div></div><div class="card"><div class="section-title"><h2>Desempenho por trilha</h2><small>Com base nas conclusões registradas</small></div><div id="trail-performance" class="table-wrap"></div></div></section>
 <section id="view-students" class="view"><div class="card"><div class="section-title"><h2>Alunos</h2><div><button class="btn" onclick="exportStudents()">Baixar Excel</button> <button class="btn primary" onclick="openStudentModal()">Inscrever aluno</button></div></div><div class="toolbar"><input id="student-search" class="search" placeholder="Buscar por nome, e-mail, empresa, cargo ou trilha"><div class="filters-label">Filtros</div><select id="student-trail-filter" class="filter"><option value="all">Todas as trilhas</option></select><select id="student-started-filter" class="filter"><option value="all">Qualquer trilha iniciada</option><option value="yes">Iniciou alguma trilha</option><option value="no">Ainda não confirmou início</option></select><select id="student-completion" class="filter"><option value="all">Qualquer conclusão</option><option value="yes">Concluiu trilha</option><option value="no">Não concluiu</option></select><select id="student-interest" class="filter"><option value="all">Qualquer interesse</option><option value="sim_agora">Início imediato</option><option value="sim_depois">Pretende fazer depois</option><option value="nao">Não pretende</option><option value="unknown">Não informado</option></select><select id="student-education" class="filter"><option value="all">Qualquer formação</option><option value="yes">Com formação superior</option><option value="no">Sem formação superior</option><option value="unknown">Não informado</option></select><select id="student-period" class="filter"><option value="all">Qualquer período</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option></select></div><div id="students-result-meta" class="result-meta"></div><div id="students-wrap" class="table-wrap"><div class="loading">Carregando alunos...</div></div></div></section>
@@ -47,7 +49,7 @@
       <div class="metric"><div class="label">Total de feedbacks</div><div class="value" id="feedback-total"></div></div>
       <div class="metric"><div class="label">Nota média</div><div class="value" id="feedback-average"></div><div class="hint">De 0 a 10</div></div>
       <div class="metric"><div class="label">NPS</div><div class="value" id="feedback-nps"></div><div class="hint">De −100 a 100</div></div>
-      <div class="metric"><div class="label">Promotores</div><div class="value" id="feedback-promoters"></div><div class="hint" id="feedback-promoter-share"></div></div>
+      <div class="metric"><div class="label">Falaram bem</div><div class="value" id="feedback-promoters"></div><div class="hint" id="feedback-promoter-share"></div></div>
     </div>
     <div class="card">
       <div class="section-title"><h2>Respostas dos alunos</h2><button type="button" class="btn" id="feedback-export" disabled>Baixar Excel</button></div>
@@ -58,7 +60,7 @@
           <option value="">Todas as notas</option><option>10</option><option>9</option><option>8</option><option>7</option><option value="6">6 ou menos</option>
         </select>
         <select id="feedback-class" class="filter" aria-label="Classificação NPS">
-          <option value="">Todas as classificações</option><option value="Promotor">Promotores</option><option value="Neutro">Neutros</option><option value="Detrator">Detratores</option>
+          <option value="">Todas as classificações</option><option value="Promotor">Falaram bem</option><option value="Neutro">Neutros</option><option value="Detrator">Falaram mal</option>
         </select>
         <select id="feedback-period" class="filter" aria-label="Período">
           <option value="">Todos os períodos</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option>
@@ -81,7 +83,7 @@
 </section>
 <section id="view-access" class="view"><div class="card"><div class="section-title"><h2>Acessos administrativos</h2><button class="btn primary" onclick="openModal('access-modal')">Novo usuário</button></div><div id="access-wrap" class="table-wrap"><div class="loading">Carregando acessos...</div></div></div></section>
 </main></div>
-<nav id="mobile-nav" class="mobile-nav hidden"><button data-view="overview" class="active">Métricas</button><button data-view="students">Alunos</button><button data-view="leads">Leads</button><button data-view="trails">Trilhas</button><button data-view="comments">Comentários</button><button data-view="feedbacks">Feedbacks</button><button data-view="access">Acessos</button></nav>
+<nav id="mobile-nav" class="mobile-nav hidden"><button data-view="overview" class="active">Métricas</button><button data-view="students">Alunos</button><button data-view="leads">Leads</button><button data-view="trails">Trilhas</button><button data-view="comments"><span class="nav-item-label">Comentários</span></button><button data-view="feedbacks"><span class="nav-item-label">Feedbacks</span></button><button data-view="access">Acessos</button></nav>
 <div id="student-modal" class="modal-backdrop"><div class="modal"><div class="modal-head"><div><h3>Inscrever aluno</h3><p>Cria uma conta real no Supabase Auth e vincula a trilha selecionada.</p></div><button class="close" onclick="closeModal('student-modal')">Fechar</button></div><form id="student-form"><div class="form-grid"><div class="field"><label>Nome</label><input name="nome" required></div><div class="field"><label>E-mail</label><input name="email" type="email" required></div><div class="field"><label>Senha inicial</label><input name="password" type="password" minlength="6" required></div><div class="field"><label>Trilha</label><select name="trilha" id="student-trail-select" required></select></div></div><div class="modal-actions"><button type="button" class="btn" onclick="closeModal('student-modal')">Cancelar</button><button class="btn primary" type="submit">Criar aluno</button></div></form></div></div>
 <div id="trail-modal" class="modal-backdrop"><div class="modal"><div class="modal-head"><div><h3 id="trail-modal-title">Nova trilha</h3><p id="trail-modal-subtitle">Crie a trilha, conecte sua LP e cadastre as aulas.</p></div><button class="close" onclick="closeModal('trail-modal')">Fechar</button></div><form id="trail-form"><input type="hidden" name="slug" id="trail-slug"><div class="form-grid"><div class="field"><label>Nome da trilha</label><input name="nome" id="trail-name" required></div><div class="field"><label>Curso / MBA relacionado</label><select name="curso_id" id="course-select" required></select></div><div class="field"><label>Carga horária da trilha (horas)</label><input name="carga_horaria" id="trail-workload" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Ex.: 4" required></div><div class="field"><label>Exibição da LP</label><div class="toggle-row"><input type="checkbox" name="lp_ativa" id="trail-lp-active"><span>Exibir a LP do Lovable na URL oficial</span></div></div><div class="field full"><label>URL publicada no Lovable</label><input name="lp_url" id="trail-lp-url" type="url" placeholder="https://nome-do-projeto.lovable.app"></div><div class="field full"><label>URL oficial da Hub</label><div id="trail-official-url" class="lp-official">Digite o nome da trilha para gerar a URL.</div></div><div class="field full"><label>Descrição da trilha</label><textarea name="descricao" maxlength="250" required></textarea></div></div><div class="notice" style="margin-top:14px">A URL oficial é gerada automaticamente a partir do nome da trilha. Depois que a trilha for criada, essa URL permanece estável mesmo que o nome exibido seja alterado no futuro.</div><div class="section-title" style="margin-top:18px"><h2 style="font-size:14px">Aulas</h2><button type="button" class="btn" onclick="addLessonField()">Adicionar aula</button></div><div id="lesson-fields"></div><div class="modal-actions"><button type="button" class="btn" onclick="closeModal('trail-modal')">Cancelar</button><button class="btn primary" type="submit" id="trail-submit">Criar como rascunho</button></div></form></div></div>
 <div id="lp-modal" class="modal-backdrop"><div class="modal" style="width:min(720px,100%)"><div class="modal-head"><div><h3>Landing Page da trilha</h3><p>Conecte uma LP publicada no Lovable à URL oficial da Hub.</p></div><button class="close" onclick="closeModal('lp-modal')">Fechar</button></div><form id="lp-form"><input type="hidden" name="trilha_id" id="lp-trilha-id"><input type="hidden" name="slug" id="lp-slug"><div class="form-grid"><div class="field full"><label>Trilha</label><input id="lp-trilha-nome" disabled></div><div class="field"><label>Status da LP</label><div id="lp-status-preview"><span class="pill">Não configurada</span></div></div><div class="field"><label>Exibição da LP</label><div class="toggle-row"><input type="checkbox" name="lp_ativa" id="lp-ativa"><span>Exibir a LP do Lovable na URL oficial</span></div></div><div class="field full"><label>URL publicada no Lovable</label><input name="lp_url" id="lp-url" type="url" placeholder="https://nome-do-projeto.lovable.app"></div><div class="field full"><label>URL oficial da Hub</label><div style="display:flex;gap:8px;align-items:stretch"><div id="lp-official-url" class="lp-official" style="flex:1"></div><button type="button" class="btn" onclick="copyOfficialUrlFromModal()">Copiar URL</button></div></div></div><div class="notice" style="margin-top:14px">A URL do Lovable fica somente como configuração interna. Para divulgar a trilha, use sempre a URL oficial da Hub.</div><div class="modal-actions"><button type="button" class="btn" onclick="closeModal('lp-modal')">Cancelar</button><button class="btn primary" type="submit">Salvar configuração</button></div></form></div></div>
@@ -128,9 +130,92 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 function errText(e){return e?.message||e?.error_description||String(e||'Erro desconhecido')}
 async function invokeEdge(slug,options={}){const token=state.session?.access_token;if(!token)throw new Error('Sessão expirada.');const res=await fetch(SUPABASE_URL+'/functions/v1/'+slug,{method:options.method||'POST',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:options.body?JSON.stringify(options.body):undefined});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||'Erro na função '+slug);return data}
 function openModal(id){document.getElementById(id).classList.add('show')}function closeModal(id){document.getElementById(id).classList.remove('show')}
-async function switchView(v){state.currentView=v;document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('view-'+v).classList.add('active');document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));document.getElementById('page-title').textContent=titles[v][0];document.getElementById('page-subtitle').textContent=titles[v][1];window.scrollTo({top:0,behavior:'smooth'});await ensureViewData(v)}
+const unreadSources={
+  comments:{table:'comments',columns:['created_at'],rows:()=>state.comments,latest:null},
+  feedbacks:{table:'trilha_nps_respostas',columns:['created_at','updated_at'],rows:()=>state.nps,latest:null}
+};
+const lastSeenByKey=new Map();
+
+function timestampMicros(value){
+  const milliseconds=Date.parse(value);
+  if(!Number.isFinite(milliseconds))return -Infinity;
+  const fraction=value.match(/\.(\d+)/)?.[1]||'';
+  return milliseconds*1000+Number(fraction.padEnd(6,'0').slice(3,6));
+}
+
+function newestTimestamp(a,b){
+  return timestampMicros(b)>timestampMicros(a)?b:a;
+}
+
+function readLastSeen(key){
+  const inMemory=lastSeenByKey.get(key);
+  try{return newestTimestamp(inMemory,localStorage.getItem(key))}
+  catch{return inMemory}
+}
+
+function syncUnread(view,latest,seen=false){
+  const source=unreadSources[view];
+  source.latest=newestTimestamp(source.latest,latest);
+  const user=state.session?.user;
+  const adminId=user?.id||user?.email?.toLowerCase();
+  if(!adminId)return;
+  const key='hub_admin_'+view+'_last_seen_'+adminId;
+  let lastSeen=readLastSeen(key);
+  if(seen&&newestTimestamp(lastSeen,latest)!==lastSeen){
+    lastSeen=latest;
+    lastSeenByKey.set(key,lastSeen);
+    try{localStorage.setItem(key,lastSeen)}catch{}
+  }
+  const unread=state.currentView!==view&&newestTimestamp(lastSeen,source.latest)!==lastSeen;
+  document.querySelectorAll('[data-view="'+view+'"]').forEach(button=>{
+    button.querySelector('.nav-item-label').classList.toggle('has-unread',unread);
+    if(unread)button.setAttribute('aria-label',titles[view][0]+' (novos itens)');
+    else button.removeAttribute('aria-label');
+  });
+}
+
+function latestLoadedTimestamp(view){
+  const {rows,columns}=unreadSources[view];
+  let latest=null;
+  for(const row of rows()){
+    for(const column of columns)latest=newestTimestamp(latest,row[column]);
+  }
+  return latest;
+}
+
+function syncLoadedUnread(view){
+  if(unreadSources[view]&&state.loaded[view]){
+    syncUnread(view,latestLoadedTimestamp(view),state.currentView===view);
+  }
+}
+
+async function refreshUnreadIndicators(skipView){
+  await Promise.allSettled(Object.entries(unreadSources).filter(([view])=>view!==skipView).map(async ([view,{table,columns}])=>{
+    const timestamps=await Promise.all(columns.map(async column=>{
+      const {data,error}=await db.from(table).select(column).order(column,{ascending:false,nullsFirst:false}).limit(1);
+      if(error)throw error;
+      return data?.[0]?.[column];
+    }));
+    syncUnread(view,timestamps.reduce(newestTimestamp,null));
+  }));
+}
+
+async function switchView(v){
+  state.currentView=v;
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  document.getElementById('page-title').textContent=titles[v][0];
+  document.getElementById('page-subtitle').textContent=titles[v][1];
+  window.scrollTo({top:0,behavior:'smooth'});
+  for(const view of Object.keys(unreadSources))syncUnread(view);
+  const latest=unreadSources[v]?.latest;
+  const stale=!!latest&&timestampMicros(latest)>timestampMicros(latestLoadedTimestamp(v));
+  await ensureViewData(v,stale);
+  syncLoadedUnread(v);
+}
 async function login(email,password){const {data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;const {data:isAdmin,error:adminError}=await db.rpc('is_admin');if(adminError||!isAdmin){await db.auth.signOut();throw new Error('Este usuário não possui acesso administrativo.')}state.session=data.session;await enterAdmin()}
-async function enterAdmin(){document.getElementById('login-screen').classList.add('hidden');document.getElementById('admin-app').classList.remove('hidden');document.getElementById('mobile-nav').classList.remove('hidden');document.getElementById('admin-email').textContent=state.session.user.email||'';await ensureViewData('overview')}
+async function enterAdmin(){document.getElementById('login-screen').classList.add('hidden');document.getElementById('admin-app').classList.remove('hidden');document.getElementById('mobile-nav').classList.remove('hidden');document.getElementById('admin-email').textContent=state.session.user.email||'';await Promise.all([ensureViewData('overview'),refreshUnreadIndicators()])}
 function setViewLoading(v,msg='Carregando dados...'){const view=document.getElementById('view-'+v);if(!view)return;let box=view.querySelector('.view-loading-temp');if(!box){box=document.createElement('div');box.className='view-loading view-loading-temp';view.prepend(box)}box.innerHTML='<div class="spinner"></div>'+esc(msg)}
 function clearViewLoading(v){document.querySelector('#view-'+v+' .view-loading-temp')?.remove()}
 function rebuildIndexes(){const studentByEmail=new Map(),leadByEmail=new Map(),progressByUser=new Map(),sdrByEmail=new Map(),startsByUser=new Map(),startsByLead=new Map(),watchProgressByUser=new Map(),npsByEmail=new Map();for(const s of state.students)studentByEmail.set(String(s.email||'').toLowerCase(),s);for(const l of state.leads)leadByEmail.set(String(l.email||'').toLowerCase(),l);for(const p of state.progress){const k=String(p.user_id),set=progressByUser.get(k)||new Set();set.add(String(p.lesson_id));progressByUser.set(k,set)}for(const st of state.starts){const uk=String(st.user_id||''),ua=startsByUser.get(uk)||[];ua.push(st);startsByUser.set(uk,ua);if(st.lead_id){const lk=String(st.lead_id),la=startsByLead.get(lk)||[];la.push(st);startsByLead.set(lk,la)}}for(const arr of startsByUser.values())arr.sort((a,b)=>new Date(b.started_at||0)-new Date(a.started_at||0));for(const arr of startsByLead.values())arr.sort((a,b)=>new Date(b.started_at||0)-new Date(a.started_at||0));for(const wp of state.watchProgress){const k=String(wp.user_id||''),arr=watchProgressByUser.get(k)||[];arr.push(wp);watchProgressByUser.set(k,arr)}for(const n of state.nps){const k=String(n.lead_email||'').toLowerCase(),arr=npsByEmail.get(k)||[];arr.push(n);npsByEmail.set(k,arr)}for(const t of state.sdr){const k=String(t.lead_email||'').toLowerCase(),arr=sdrByEmail.get(k)||[];arr.push(t);sdrByEmail.set(k,arr)}for(const arr of sdrByEmail.values())arr.sort((a,b)=>new Date(b.stage_changed_at||b.contacted_at||b.created_at||0)-new Date(a.stage_changed_at||a.contacted_at||a.created_at||0));state.idx={studentByEmail,leadByEmail,progressByUser,sdrByEmail,startsByUser,startsByLead,watchProgressByUser,npsByEmail};state.completionCache.clear()}
@@ -164,9 +249,9 @@ async function ensureSdr(){if(state.sdr.length&&state.stages.length)return;const
 async function loadOverviewData(){await ensureBase();const [analytics,progress,comments]=await Promise.all([db.rpc('get_lesson_analytics'),ensureProgress(),fetchAllRows('comments','id,lesson_id,name,text,created_at,user_id,status,approved,reviewed_at,reviewed_by','created_at',false)]);if(analytics.error)throw analytics.error;state.views=(analytics.data||[]).map(x=>({lesson_id:x.lesson_id,view_count:Number(x.total_views)||0,unique_viewers:Number(x.unique_viewers)||0,last_viewed_at:x.last_viewed_at}));state.comments=comments;state.loaded.overview=true;rebuildIndexes();renderOverview();renderTrails()}
 async function loadStudentsData(){await Promise.all([ensureBase(),ensureProgress(),ensureTrailStarts(),ensureWatchProgress(),ensureNps(),ensureLeadsCore(),ensureStudentsCore(),loadManualCertificates()]);state.loaded.students=true;rebuildIndexes();syncStudentTrailFilter();renderStudents()}
 async function loadLeadsData(){await Promise.all([ensureBase(),ensureProgress(),ensureTrailStarts(),ensureLeadsCore(),ensureStudentsCore(),ensureSdr()]);state.loaded.leads=true;rebuildIndexes();renderLeads()}
-async function loadCommentsData(){await ensureBase();if(!state.comments.length)state.comments=await fetchAllRows('comments','id,lesson_id,name,text,created_at,user_id,status,approved,reviewed_at,reviewed_by','created_at',false);state.loaded.comments=true;renderComments()}
+async function loadCommentsData(force){await ensureBase();if(force||!state.comments.length)state.comments=await fetchAllRows('comments','id,lesson_id,name,text,created_at,user_id,status,approved,reviewed_at,reviewed_by','created_at',false);state.loaded.comments=true;renderComments()}
 async function loadAccessData(){const r=await db.rpc('list_admin_users');if(r.error)throw r.error;state.admins=r.data||[];state.loaded.access=true;renderAccess()}
-async function ensureViewData(v,force=false){if(state.loading[v])return state.loading[v];if(state.loaded[v]&&!force){if(v==='overview')renderOverview();if(v==='students')renderStudents();if(v==='leads')renderLeads();if(v==='trails')renderTrails();if(v==='comments')renderComments();if(v==='feedbacks')renderFeedbacks();if(v==='access')renderAccess();return}setViewLoading(v,'Carregando '+(titles[v]?.[0]||'dados')+'...');state.loading[v]=(async()=>{try{if(force)state.loaded[v]=false;if(v==='overview')await loadOverviewData();else if(v==='students')await loadStudentsData();else if(v==='leads')await loadLeadsData();else if(v==='trails'){await ensureBase();state.loaded.trails=true;renderTrails()}else if(v==='comments')await loadCommentsData();else if(v==='feedbacks')await loadFeedbacksData(force);else if(v==='access')await loadAccessData();document.getElementById('sync-time').textContent='Atualizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}catch(e){toast('Erro ao carregar: '+errText(e));console.error(e)}finally{clearViewLoading(v);delete state.loading[v]}})();return state.loading[v]}
+async function ensureViewData(v,force=false){if(state.loading[v])return state.loading[v];if(state.loaded[v]&&!force){if(v==='overview')renderOverview();if(v==='students')renderStudents();if(v==='leads')renderLeads();if(v==='trails')renderTrails();if(v==='comments')renderComments();if(v==='feedbacks')renderFeedbacks();if(v==='access')renderAccess();return}setViewLoading(v,'Carregando '+(titles[v]?.[0]||'dados')+'...');state.loading[v]=(async()=>{try{if(force)state.loaded[v]=false;if(v==='overview')await loadOverviewData();else if(v==='students')await loadStudentsData();else if(v==='leads')await loadLeadsData();else if(v==='trails'){await ensureBase();state.loaded.trails=true;renderTrails()}else if(v==='comments')await loadCommentsData(force);else if(v==='feedbacks')await loadFeedbacksData(force);else if(v==='access')await loadAccessData();document.getElementById('sync-time').textContent='Atualizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}catch(e){toast('Erro ao carregar: '+errText(e));console.error(e)}finally{clearViewLoading(v);delete state.loading[v]}})();return state.loading[v]}
 async function refreshCurrent(){const v=state.currentView; if(v==='trails'){state.loaded.trails=false}  if(v==='overview'){state.views=[];state.progress=[];state.comments=[]} if(v==='students'){state.students=[];state.leads=[];state.progress=[];state.starts=[];state.watchProgress=[]} if(v==='leads'){state.leads=[];state.students=[];state.progress=[];state.starts=[];state.sdr=[];state.stages=[]} if(v==='comments'){state.comments=[]} if(v==='access'){state.admins=[]} await ensureViewData(v,true)}
 async function fetchAllRows(table,columns,orderColumn=null,ascending=false){const pageSize=1000;let from=0;const rows=[];while(true){let q=db.from(table).select(columns);if(orderColumn)q=q.order(orderColumn,{ascending});const {data,error}=await q.range(from,from+pageSize-1);if(error)throw error;rows.push(...(data||[]));if(!data||data.length<pageSize)break;from+=pageSize}return rows}
 async function loadAll(){return refreshCurrent()}
@@ -410,6 +495,7 @@ function renderComments(){const q=(document.getElementById('comment-search')?.va
 async function moderateComment(id,status){const values={status,approved:status==='approved',reviewed_at:new Date().toISOString(),reviewed_by:state.session.user.email};const {error}=await db.from('comments').update(values).eq('id',id);if(error)return toast(errText(error));const c=state.comments.find(x=>String(x.id)===String(id));if(c)Object.assign(c,values);renderComments();renderOverview();toast('Comentário atualizado')}
 const feedbackPageSize=50;
 const feedbackClassColors={Promotor:'green',Neutro:'yellow',Detrator:'red'};
+const feedbackClassLabels={Promotor:'Falou bem',Neutro:'Neutro',Detrator:'Falou mal'};
 
 function feedbackClassification(score){
   if(score>=9)return 'Promotor';
@@ -510,7 +596,7 @@ function renderFeedbacks(){
       <td>${esc(row.lead_email||'—')}</td>
       <td>${esc(trailName(row.trail_slug))}</td>
       <td>${esc(row.score)}</td>
-      <td><span class="pill ${feedbackClassColors[classification]}">${classification}</span></td>
+      <td><span class="pill ${feedbackClassColors[classification]}">${feedbackClassLabels[classification]}</span></td>
       <td class="feedback-comment">${feedbackCommentHTML(row.comentario)}</td>
     </tr>`;
   }).join(''):'';
@@ -541,7 +627,7 @@ function exportFeedbacks(){
     'E-mail':row.lead_email??'',
     'Trilha':names.get(trailSlugFromName(row.trail_slug))||row.trail_slug||'',
     'Nota':Number(row.score),
-    'Classificação NPS':feedbackClassification(row.score),
+    'Classificação NPS':feedbackClassLabels[feedbackClassification(row.score)],
     'Comentário':row.comentario??''
   }));
   const date=new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
@@ -558,7 +644,13 @@ function addLessonField(lesson={}){const host=document.getElementById('lesson-fi
 function renumberLessons(){const entries=[...document.querySelectorAll('#lesson-fields .lesson-entry')];entries.forEach((e,i)=>{e.querySelector('strong').textContent='Aula '+(i+1);e.querySelector('[data-move="-1"]').disabled=i===0;e.querySelector('[data-move="1"]').disabled=i===entries.length-1})}
 function extractVideoMeta(raw){const value=String(raw||'').trim();if(!value)return null;const yt=value.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/i)||value.match(/^([A-Za-z0-9_-]{11})$/);if(yt)return{provider:'youtube',id:yt[1]};const player=value.match(/player\.vimeo\.com\/video\/(\d+)(?:[^#]*[?&]h=([A-Za-z0-9]+))?/i);if(player)return{provider:'vimeo',id:player[2]?player[1]+'/'+player[2]:player[1]};const vm=value.match(/vimeo\.com\/(?:.*\/)?(\d+)(?:\/([A-Za-z0-9]+))?(?:$|[?#])/i);if(vm)return{provider:'vimeo',id:vm[2]?vm[1]+'/'+vm[2]:vm[1]};if(/^\d+$/.test(value))return{provider:'vimeo',id:value};return null}
 document.getElementById('login-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target),box=document.getElementById('login-error');box.classList.add('hidden');try{await login(f.get('email'),f.get('password'))}catch(err){box.textContent=errText(err);box.classList.remove('hidden')}});
-document.getElementById('logout-btn').onclick=async()=>{await db.auth.signOut();location.reload()};document.getElementById('refresh-btn').onclick=refreshCurrent;document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));let __studentTimer;document.getElementById('student-search').oninput=()=>{clearTimeout(__studentTimer);__studentTimer=setTimeout(resetStudentPage,120)};['student-trail-filter','student-started-filter','student-completion','student-interest','student-education','student-period'].forEach(id=>document.getElementById(id).onchange=resetStudentPage);let __leadTimer;document.getElementById('lead-search').oninput=()=>{clearTimeout(__leadTimer);__leadTimer=setTimeout(resetLeadPage,120)};['lead-queue','lead-trail','lead-started-trail','lead-completion','lead-status'].forEach(id=>document.getElementById(id).onchange=resetLeadPage);document.getElementById('comment-search').oninput=renderComments;document.getElementById('comment-status').onchange=renderComments;
+document.getElementById('logout-btn').onclick=async()=>{await db.auth.signOut();location.reload()};document.getElementById('refresh-btn').onclick=async()=>{
+  const view=state.currentView;
+  const indicators=refreshUnreadIndicators(view);
+  await refreshCurrent();
+  syncLoadedUnread(view);
+  await indicators;
+};document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));let __studentTimer;document.getElementById('student-search').oninput=()=>{clearTimeout(__studentTimer);__studentTimer=setTimeout(resetStudentPage,120)};['student-trail-filter','student-started-filter','student-completion','student-interest','student-education','student-period'].forEach(id=>document.getElementById(id).onchange=resetStudentPage);let __leadTimer;document.getElementById('lead-search').oninput=()=>{clearTimeout(__leadTimer);__leadTimer=setTimeout(resetLeadPage,120)};['lead-queue','lead-trail','lead-started-trail','lead-completion','lead-status'].forEach(id=>document.getElementById(id).onchange=resetLeadPage);document.getElementById('comment-search').oninput=renderComments;document.getElementById('comment-status').onchange=renderComments;
 document.getElementById('feedback-search').addEventListener('input',resetFeedbackPage);
 for(const id of ['feedback-trail','feedback-score','feedback-class','feedback-period']){
   document.getElementById(id).addEventListener('change',resetFeedbackPage);
