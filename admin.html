@@ -69,7 +69,7 @@
       <div id="feedback-result-meta" class="result-meta" role="status"></div>
       <div class="table-wrap">
         <table class="table">
-          <thead><tr><th>Data</th><th>Aluno</th><th>E-mail</th><th>Trilha</th><th>Nota</th><th>Classificação</th><th>Comentário</th></tr></thead>
+          <thead><tr><th>Data</th><th>Aluno</th><th>E-mail</th><th>Trilha</th><th>Nota</th><th>Classificação</th><th>Comentário</th><th>Status de publicação</th><th>Ação</th></tr></thead>
           <tbody id="feedback-rows"></tbody>
         </table>
       </div>
@@ -238,7 +238,7 @@ let npsRequest;
 async function ensureNps(force=false){
   if(npsRequest)return npsRequest;
   if(state.nps.length&&!force)return;
-  npsRequest=fetchAllRows('trilha_nps_respostas','id,trail_slug,lead_email,lead_nome,score,comentario,created_at,updated_at','created_at',false)
+  npsRequest=fetchAllRows('trilha_nps_respostas','id,trail_slug,lead_email,lead_nome,score,comentario,created_at,updated_at,publication_status','created_at',false)
     .then(rows=>{state.nps=rows})
     .finally(()=>{npsRequest=null});
   return npsRequest;
@@ -559,6 +559,45 @@ function feedbackCommentHTML(value){
     esc(text.slice(0,160).trimEnd())+'…</span><span class="feedback-full">'+esc(text)+'</span></details>';
 }
 
+const feedbackPublicationLabels={
+  pending:['Pendente','yellow'],
+  published:['Publicado','green'],
+  unpublished:['Retirado','']
+};
+const feedbackPublicationRequests=new Set();
+
+async function changeFeedbackPublication(id){
+  if(feedbackPublicationRequests.has(id))return;
+  const row=state.nps.find(feedback=>String(feedback.id)===id);
+  if(!row)return;
+  const publish=row.publication_status!=='published';
+  const confirmation=publish
+    ? 'Confirme que você validou a autorização aplicável para publicar este feedback com o nome abreviado e verificou que o comentário não contém dados pessoais. Publicar na página da trilha?'
+    : 'Retirar este depoimento da página da trilha?';
+  if(!confirm(confirmation))return;
+
+  feedbackPublicationRequests.add(id);
+  renderFeedbacks();
+  try{
+    const {data,error}=await db.rpc('set_trail_testimonial_publication',{
+      p_feedback_id:id,
+      p_status:publish?'published':'unpublished',
+      p_expected_status:row.publication_status,
+      p_expected_updated_at:row.updated_at,
+      p_authorization_verified:publish
+    });
+    if(error)throw error;
+    const current=state.nps.find(feedback=>String(feedback.id)===id);
+    if(current?.updated_at===row.updated_at)current.publication_status=data;
+    toast(publish?'Depoimento publicado na página da trilha.':'Depoimento retirado da página da trilha.');
+  }catch(error){
+    toast(errText(error));
+  }finally{
+    feedbackPublicationRequests.delete(id);
+    renderFeedbacks();
+  }
+}
+
 function renderFeedbacks(){
   const names=feedbackTrailNames();
   const trailName=slug=>names.get(trailSlugFromName(slug))||slug||'—';
@@ -590,6 +629,9 @@ function renderFeedbacks(){
     'Nenhum feedback encontrado.';
   document.getElementById('feedback-rows').innerHTML=visible.length?visible.map(row=>{
     const classification=feedbackClassification(row.score);
+    const [statusLabel,statusColor]=feedbackPublicationLabels[row.publication_status]||feedbackPublicationLabels.pending;
+    const published=row.publication_status==='published';
+    const saving=feedbackPublicationRequests.has(String(row.id));
     return `<tr>
       <td>${fmtDate(row.created_at)}</td>
       <td>${esc(row.lead_nome||'—')}</td>
@@ -598,6 +640,8 @@ function renderFeedbacks(){
       <td>${esc(row.score)}</td>
       <td><span class="pill ${feedbackClassColors[classification]}">${feedbackClassLabels[classification]}</span></td>
       <td class="feedback-comment">${feedbackCommentHTML(row.comentario)}</td>
+      <td><span class="pill ${statusColor}">${statusLabel}</span></td>
+      <td><button type="button" class="btn ${published?'danger':'green'}" data-feedback-publication="${esc(row.id)}" ${saving?'disabled':''}>${published?'Retirar da publicação':'Publicar'}</button></td>
     </tr>`;
   }).join(''):'';
   document.getElementById('feedback-export').disabled=!total;
@@ -658,6 +702,10 @@ for(const id of ['feedback-trail','feedback-score','feedback-class','feedback-pe
 document.getElementById('feedback-prev').onclick=()=>changeFeedbackPage(-1);
 document.getElementById('feedback-next').onclick=()=>changeFeedbackPage(1);
 document.getElementById('feedback-export').onclick=exportFeedbacks;
+document.getElementById('feedback-rows').addEventListener('click',event=>{
+  const button=event.target.closest('button[data-feedback-publication]');
+  if(button)changeFeedbackPublication(button.dataset.feedbackPublication);
+});
 document.getElementById('student-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);try{await invokeEdge('admin-students',{body:{nome:f.get('nome'),email:f.get('email'),password:f.get('password'),trilha:f.get('trilha')}});closeModal('student-modal');e.target.reset();toast('Aluno criado');state.students=[];state.leads=[];state.progress=[];state.starts=[];state.loaded.students=false;await ensureViewData('students',true)}catch(err){toast(errText(err))}});
 document.getElementById('trail-name').addEventListener('input',e=>{const slug=trailEditor.id?trailEditor.slug:normalize(e.target.value);document.getElementById('trail-slug').value=slug;document.getElementById('trail-official-url').textContent=slug?officialTrailUrl(slug):'Digite o nome da trilha para gerar a URL.'});
 document.getElementById('lp-url').addEventListener('input',updateLpStatusPreview);document.getElementById('lp-ativa').addEventListener('change',updateLpStatusPreview);
