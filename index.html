@@ -1318,6 +1318,7 @@
     .lesson-list-head h2 { font-family:var(--font-display); font-size:1.6rem; letter-spacing:-.03em; }
     .lesson-list-head span { color:var(--yellow); font-size:.75rem; }
     .lesson-finish__copy { color:var(--grey-1); margin-bottom:18px; }
+    .nps-publication-notice { color:var(--grey-1); font-size:.84rem; line-height:1.55; }
     .nps-scale { display:grid; grid-template-columns:repeat(11,minmax(0,1fr)); gap:7px; margin-bottom:20px; }
     .nps-score { min-height:42px; border:1px solid #303030; background:#0d0d0d; color:var(--white); }
     .nps-score[aria-checked="true"] { border-color:var(--yellow); color:var(--yellow); background:rgba(254,183,55,.07); }
@@ -1759,7 +1760,11 @@
             <div id="finish-feedback">
               <p class="lesson-finish__copy">De 0 a 10, quanto você recomendaria esta trilha a um amigo ou colega?</p>
               <div class="nps-scale" id="nps-scale" role="radiogroup" aria-label="Nota de 0 a 10"></div>
-              <div class="field"><label for="nps-comment">Comentário sobre sua experiência</label><textarea id="nps-comment" maxlength="1000" required placeholder="Conte como foi sua experiência"></textarea></div>
+              <div class="field">
+                <label for="nps-comment">Comentário sobre sua experiência</label>
+                <textarea id="nps-comment" maxlength="1000" required placeholder="Conte como foi sua experiência" aria-describedby="nps-publication-notice"></textarea>
+                <p class="nps-publication-notice" id="nps-publication-notice">Seu feedback poderá ser utilizado pela Fundace em materiais de divulgação, incluindo as páginas das trilhas, acompanhado de sua identificação abreviada.</p>
+              </div>
             </div>
             <aside class="finish-mba" id="finish-mba" hidden aria-labelledby="finish-mba-title">
               <span class="finish-mba__eyebrow">PRÓXIMO PASSO</span>
